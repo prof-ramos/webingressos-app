@@ -5,9 +5,18 @@ import { getSupabaseConfig } from "@/lib/supabase/config"
 
 export async function updateSession(request: NextRequest) {
   const config = getSupabaseConfig()
+  const isPublicRoute =
+    request.nextUrl.pathname === "/login" || request.nextUrl.pathname.startsWith("/auth")
 
   if (!config) {
-    return NextResponse.next({ request })
+    if (isPublicRoute) {
+      return NextResponse.next({ request })
+    }
+
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = "/login"
+    redirectUrl.searchParams.set("error", "supabase_not_configured")
+    return NextResponse.redirect(redirectUrl)
   }
 
   let response = NextResponse.next({ request })
@@ -27,9 +36,6 @@ export async function updateSession(request: NextRequest) {
   })
 
   const { data } = await supabase.auth.getClaims()
-  const isPublicRoute =
-    request.nextUrl.pathname === "/login" || request.nextUrl.pathname.startsWith("/auth")
-
   if (!data?.claims && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = "/login"

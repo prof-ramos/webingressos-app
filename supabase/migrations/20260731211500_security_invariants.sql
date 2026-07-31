@@ -20,6 +20,9 @@ as $$
       and membership.role = any (allowed_roles)
   )
   or exists (
+    -- Collaborator visibility is intentionally separate from event mutation roles.
+    -- An external organization owner is not implicitly the event owner; an
+    -- event-scoped permission model can map that owner explicitly later.
     select 1
     from public.event_organizations event_organization
     join public.organization_memberships membership

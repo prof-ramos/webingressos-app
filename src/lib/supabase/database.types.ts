@@ -635,35 +635,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      append_audit_log: {
-        Args: {
-          target_action: string
-          target_entity_public_id: string
-          target_entity_type: string
-          target_event_id: number
-          target_metadata?: Json
-          target_organization_id: number
-          target_reason?: string
-        }
-        Returns: {
-          action: string
-          actor_user_id: string | null
-          entity_public_id: string
-          entity_type: string
-          event_id: number | null
-          id: number
-          metadata: Json
-          occurred_at: string
-          organization_id: number
-          reason: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "audit_logs"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       can_access_event: { Args: { target_event_id: number }; Returns: boolean }
       check_in_ticket: {
         Args: {
@@ -731,6 +702,35 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      transition_ledger_entry_status: {
+        Args: {
+          requested_status: Database["public"]["Enums"]["ledger_entry_status"]
+          target_ledger_entry_id: number
+          transition_reason?: string
+        }
+        Returns: {
+          amount_cents: number
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          description: string
+          event_id: number
+          id: number
+          kind: Database["public"]["Enums"]["ledger_entry_kind"]
+          occurred_at: string
+          organization_id: number
+          paid_at: string | null
+          public_id: string
+          status: Database["public"]["Enums"]["ledger_entry_status"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ledger_entries"
           isOneToOne: true
           isSetofReturn: false
         }
