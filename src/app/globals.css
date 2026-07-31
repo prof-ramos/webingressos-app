@@ -1,0 +1,106 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --background: #f9fafc;
+  --foreground: #1b2740;
+  --card: #ffffff;
+  --card-foreground: #1b2740;
+  --popover: #ffffff;
+  --popover-foreground: #1b2740;
+  --primary: #0e6340;
+  --primary-foreground: #ffffff;
+  --secondary: #eaf5ef;
+  --secondary-foreground: #0a4d32;
+  --muted: #f1f6f5;
+  --muted-foreground: #5e6677;
+  --accent: #d3eadf;
+  --accent-foreground: #0a4d32;
+  --destructive: #c8394f;
+  --border: #e9ecf1;
+  --input: #e9ecf1;
+  --ring: #2f9e68;
+  --radius: 0.625rem;
+
+  --brand-50: #f2faf5;
+  --brand-100: #eaf5ef;
+  --brand-200: #d3eadf;
+  --brand-300: #a8d5bc;
+  --brand-400: #71bd91;
+  --brand-500: #2f9e68;
+  --brand-600: #1d7d50;
+  --brand-700: #0e6340;
+  --brand-800: #0a4d32;
+  --brand-900: #073b27;
+  --ink-50: #f9fafc;
+  --ink-100: #f1f6f5;
+  --ink-200: #e9ecf1;
+  --ink-300: #d6dbe4;
+  --ink-400: #aeb6c5;
+  --ink-500: #8a92a3;
+  --ink-600: #5e6677;
+  --ink-700: #38445b;
+  --ink-800: #273650;
+  --ink-900: #1b2740;
+  --error: #c8394f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+  --color-error: var(--error);
+}
+
+@custom-variant dark (&:is(.never-dark *));
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Plus Jakarta Sans", sans-serif;
+}

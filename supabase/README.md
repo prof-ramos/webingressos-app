@@ -1,0 +1,29 @@
+# Supabase
+
+O projeto de desenvolvimento foi provisionado como `webingressos-dev` na organização `proframos`, região `sa-east-1`, ref `zcvkdgethbhgaownygzs`. As migrations deste diretório já foram aplicadas no ambiente remoto.
+
+## Regras para as migrations
+
+- começar cada migration com `supabase migration new <nome>`;
+- usar `bigint generated always as identity` para chaves internas;
+- manter um identificador público opaco e único quando a entidade sair do limite interno;
+- usar `timestamptz` para instantes e centavos inteiros para valores em BRL;
+- criar índices para toda FK e para colunas usadas nos predicados de RLS;
+- habilitar RLS em todas as tabelas de negócio;
+- escrever políticas com o vínculo da organização/evento e avaliar `auth.uid()` uma vez por consulta;
+- manter transações curtas, com ordem de lock consistente; nunca fazer chamada externa durante check-in;
+- não usar `service_role` ou chave secreta no browser.
+
+O primeiro conjunto de tabelas deve acompanhar a fatia vertical descrita em [`../CONTEXT.md`](../CONTEXT.md): organização, memberships, evento, lote, pedido, item, ingresso, check-in, lançamento financeiro e auditoria.
+
+## Fluxo de aplicação
+
+```bash
+supabase link --project-ref zcvkdgethbhgaownygzs
+pnpm supabase:push
+pnpm supabase:types
+```
+
+O link requer a senha do banco no prompt local, ou pode reutilizar a credencial nativa salva pelo Supabase CLI. Ela não deve ser versionada.
+
+As credenciais estão sendo mantidas no 1Password, vault `webingressos`, nos itens `Supabase | webingressos-dev` e `Supabase Database Password | webingressos-dev`. A senha do banco foi redefinida no Dashboard e o item não contém valores expostos no repositório.
