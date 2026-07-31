@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react"
 import {
   BarChart3,
   CalendarDays,
@@ -35,6 +36,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -91,6 +93,16 @@ function WorkspaceSelector() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.replace("/login")
+    router.refresh()
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card lg:flex">
@@ -118,7 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 lg:hidden">
-            <Sheet>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger render={<Button variant="outline" size="icon" aria-label="Abrir menu" />}>
                 <Menu aria-hidden="true" />
               </SheetTrigger>
@@ -133,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="px-4">
                   <WorkspaceSelector />
                 </div>
-                <NavigationLinks />
+                <NavigationLinks onNavigate={() => setMobileMenuOpen(false)} />
               </SheetContent>
             </Sheet>
             <BrandMark compact />
@@ -165,7 +177,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem>Perfil</DropdownMenuItem>
               <DropdownMenuItem>Preferências</DropdownMenuItem>
-              <DropdownMenuItem>Encerrar sessão</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>Encerrar sessão</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

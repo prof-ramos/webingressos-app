@@ -320,6 +320,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ledger_entries_event_organization_fkey"
+            columns: ["event_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
             foreignKeyName: "ledger_entries_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -472,6 +479,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_promoter_event_fkey"
+            columns: ["promoter_id", "event_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id", "event_id"]
+          },
+          {
             foreignKeyName: "orders_promoter_id_fkey"
             columns: ["promoter_id"]
             isOneToOne: false
@@ -621,6 +635,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      append_audit_log: {
+        Args: {
+          target_action: string
+          target_entity_public_id: string
+          target_entity_type: string
+          target_event_id: number
+          target_metadata?: Json
+          target_organization_id: number
+          target_reason?: string
+        }
+        Returns: {
+          action: string
+          actor_user_id: string | null
+          entity_public_id: string
+          entity_type: string
+          event_id: number | null
+          id: number
+          metadata: Json
+          occurred_at: string
+          organization_id: number
+          reason: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       can_access_event: { Args: { target_event_id: number }; Returns: boolean }
       check_in_ticket: {
         Args: {
@@ -667,6 +710,57 @@ export type Database = {
       is_org_member: {
         Args: { target_organization_id: number }
         Returns: boolean
+      }
+      transition_event_status: {
+        Args: {
+          requested_status: Database["public"]["Enums"]["event_status"]
+          target_event_id: number
+          transition_reason?: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          ends_at: string | null
+          id: number
+          name: string
+          organization_id: number
+          public_id: string
+          starts_at: string | null
+          status: Database["public"]["Enums"]["event_status"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      transition_order_status: {
+        Args: {
+          requested_status: Database["public"]["Enums"]["order_status"]
+          target_order_id: number
+          transition_reason?: string
+        }
+        Returns: {
+          buyer_email: string | null
+          buyer_name: string | null
+          buyer_phone: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          event_id: number
+          id: number
+          promoter_id: number | null
+          public_id: string
+          status: Database["public"]["Enums"]["order_status"]
+          total_cents: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {

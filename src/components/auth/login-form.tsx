@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getSafeNextPath } from "@/lib/safe-navigation"
 import { createClient } from "@/lib/supabase/client"
 
 export function LoginForm() {
@@ -29,7 +30,8 @@ export function LoginForm() {
         return
       }
 
-      router.push("/dashboard")
+      const next = new URLSearchParams(window.location.search).get("next")
+      router.push(getSafeNextPath(next, window.location.origin))
       router.refresh()
     } catch {
       setError("A autenticação ainda não está configurada neste ambiente.")
