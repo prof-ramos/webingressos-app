@@ -6,7 +6,7 @@ O produto está sendo construído como um monólito modular: uma aplicação Nex
 
 ## Estado atual
 
-Esta é a fundação do produto, não uma versão pronta para produção. O shell visual, os contratos de domínio, a integração SSR preparada para Supabase e a separação dos módulos estão em place; ainda faltam projeto Supabase, migrations, políticas RLS concretas, fluxos de negócio e testes de integração.
+Esta é a fundação do produto, não uma versão pronta para produção. O shell visual, os contratos de domínio, a integração SSR com Supabase, as migrations/RLS iniciais e a separação dos módulos estão em place; ainda faltam fluxos de negócio completos e testes de integração.
 
 ## Desenvolvimento
 

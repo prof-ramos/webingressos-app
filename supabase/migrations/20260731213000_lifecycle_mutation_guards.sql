@@ -38,7 +38,8 @@ begin
   select status
   into current_order_status
   from public.orders
-  where id = new.order_id;
+  where id = new.order_id
+  for update;
 
   if current_order_status is distinct from 'pending' then
     raise exception using errcode = '23514', message = 'Order items require a pending order';
@@ -55,6 +56,28 @@ create trigger order_items_require_pending_order
 
 revoke all on function public.prevent_order_item_write_after_confirmation() from public;
 
+create or replace function public.prevent_lot_event_change()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.event_id is distinct from old.event_id then
+    raise exception using
+      errcode = '23001',
+      message = 'Lot event cannot be changed';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger lots_event_immutable
+  before update on public.lots
+  for each row execute function public.prevent_lot_event_change();
+
+revoke all on function public.prevent_lot_event_change() from public;
+
 drop policy if exists ledger_entries_insert_finance on public.ledger_entries;
 create policy ledger_entries_insert_finance
   on public.ledger_entries for insert to authenticated
@@ -65,7 +88,43 @@ create policy ledger_entries_insert_finance
     and status = 'previsto'
     and approved_by is null
     and paid_at is null
+    and exists (
+      select 1
+      from public.events event_record
+      where event_record.id = ledger_entries.event_id
+        and event_record.status <> 'prestacao_contas_fechada'
+    )
   );
+
+create or replace function public.prevent_ledger_write_after_settlement()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  event_status public.event_status;
+begin
+  select status
+  into event_status
+  from public.events
+  where id = new.event_id
+  for update;
+
+  if event_status = 'prestacao_contas_fechada' then
+    raise exception using errcode = '23514', message = 'Ledger is closed for this event';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists ledger_entries_require_open_event on public.ledger_entries;
+create trigger ledger_entries_require_open_event
+  before insert or update on public.ledger_entries
+  for each row execute function public.prevent_ledger_write_after_settlement();
+
+revoke all on function public.prevent_ledger_write_after_settlement() from public;
 
 create or replace function public.transition_order_status(
   target_order_id bigint,
@@ -81,8 +140,11 @@ declare
   current_order public.orders;
   changed_order public.orders;
   order_items_total bigint;
+  current_event public.events;
   target_lot_id bigint;
   lot_capacity integer;
+  lot_sales_start_at timestamptz;
+  lot_sales_end_at timestamptz;
   current_order_lot_quantity bigint;
   confirmed_lot_quantity bigint;
 begin
@@ -124,6 +186,16 @@ begin
   end if;
 
   if requested_status = 'confirmed' then
+    select *
+    into current_event
+    from public.events
+    where id = current_order.event_id
+    for update;
+
+    if current_event.status <> 'vendas_abertas' then
+      raise exception using errcode = '23514', message = 'Event is not open for sales';
+    end if;
+
     select coalesce(sum(item.subtotal_cents), 0)
     into order_items_total
     from public.order_items item
@@ -140,10 +212,17 @@ begin
       order by item.lot_id
     loop
       select lot.capacity
-      into lot_capacity
+        , lot.sales_start_at
+        , lot.sales_end_at
+      into lot_capacity, lot_sales_start_at, lot_sales_end_at
       from public.lots lot
       where lot.id = target_lot_id
       for update;
+
+      if (lot_sales_start_at is not null and now() < lot_sales_start_at)
+        or (lot_sales_end_at is not null and now() > lot_sales_end_at) then
+        raise exception using errcode = '23514', message = 'Lot is outside its sales window';
+      end if;
 
       if lot_capacity is null then
         continue;
@@ -212,6 +291,7 @@ as $$
 declare
   current_entry public.ledger_entries;
   changed_entry public.ledger_entries;
+  current_event_status public.event_status;
 begin
   if (select auth.uid()) is null then
     raise exception using errcode = '42501', message = 'Authentication required';
@@ -225,6 +305,16 @@ begin
 
   if not found then
     raise exception using errcode = 'P0002', message = 'Ledger entry not found';
+  end if;
+
+  select status
+  into current_event_status
+  from public.events
+  where id = current_entry.event_id
+  for update;
+
+  if current_event_status = 'prestacao_contas_fechada' then
+    raise exception using errcode = '23514', message = 'Ledger is closed for this event';
   end if;
 
   if not public.has_event_role(
@@ -299,6 +389,7 @@ declare
   lot_event_id bigint;
   item_quantity integer;
   current_order_status public.order_status;
+  current_event_status public.event_status;
   issued_quantity bigint;
   excluded_ticket_id bigint;
 begin
@@ -312,15 +403,18 @@ begin
     item.quantity,
     order_record.event_id,
     order_record.status,
-    lot.event_id
+    lot.event_id,
+    event_record.status
   into
     item_quantity,
     order_event_id,
     current_order_status,
-    lot_event_id
+    lot_event_id,
+    current_event_status
   from public.order_items item
   join public.orders order_record on order_record.id = item.order_id
   join public.lots lot on lot.id = item.lot_id
+  join public.events event_record on event_record.id = order_record.event_id
   where item.id = new.order_item_id
   for update of item;
 
@@ -341,6 +435,10 @@ begin
 
   if current_order_status <> 'confirmed' then
     raise exception using errcode = '23514', message = 'Tickets require a confirmed order';
+  end if;
+
+  if current_event_status <> 'vendas_abertas' then
+    raise exception using errcode = '23514', message = 'Tickets require an event open for sales';
   end if;
 
   select count(*)
@@ -378,14 +476,15 @@ declare
   ticket_record record;
   existing_check_in timestamptz;
   inserted_check_in timestamptz;
+  locked_event_status public.event_status;
+  locked_order_status public.order_status;
 begin
   select
     ticket.id,
     ticket.public_id,
     ticket.event_id,
     event_record.public_id as event_public_id,
-    event_record.status as event_status,
-    order_record.status as order_status
+    item.order_id as order_id
   into ticket_record
   from public.tickets ticket
   join public.events event_record on event_record.id = ticket.event_id
@@ -407,12 +506,24 @@ begin
     return;
   end if;
 
-  if ticket_record.event_status <> 'vendas_abertas' then
+  select status
+  into locked_order_status
+  from public.orders
+  where id = ticket_record.order_id
+  for update;
+
+  select status
+  into locked_event_status
+  from public.events
+  where id = ticket_record.event_id
+  for update;
+
+  if locked_event_status <> 'vendas_abertas' then
     return query select 'invalid', 'event_not_open', ticket_record.public_id, null::timestamptz;
     return;
   end if;
 
-  if ticket_record.order_status <> 'confirmed' then
+  if locked_order_status <> 'confirmed' then
     return query select 'invalid', 'order_not_confirmed', ticket_record.public_id, null::timestamptz;
     return;
   end if;
