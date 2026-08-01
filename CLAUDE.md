@@ -256,6 +256,7 @@ Não presuma que estas coisas existem:
 
 | Pergunta | Arquivo |
 | --- | --- |
+| Visão geral dos componentes e integrações | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | Regras obrigatórias de trabalho | [`AGENTS.md`](./AGENTS.md) |
 | Significado de um termo do domínio | [`CONTEXT.md`](./CONTEXT.md) |
 | Cor, tipografia, espaçamento, componente | [`DESIGN.md`](./DESIGN.md) |

@@ -124,6 +124,7 @@ Alias de import: `@/*` aponta para `./src/*`.
 
 | Pergunta | Arquivo |
 | --- | --- |
+| Como os componentes se encaixam | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | Como o código está organizado e o que assumir | [`CLAUDE.md`](./CLAUDE.md) |
 | Regras de trabalho no repositório | [`AGENTS.md`](./AGENTS.md) |
 | Significado dos termos do domínio | [`CONTEXT.md`](./CONTEXT.md) |
