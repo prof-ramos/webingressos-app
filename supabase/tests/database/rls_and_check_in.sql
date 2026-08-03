@@ -1,6 +1,6 @@
 begin;
 
-select plan(22);
+select plan(24);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
@@ -348,18 +348,21 @@ select throws_ok(
   'ingresso não pode apontar para item de outro evento'
 );
 
-select is(
-  (select actor_user_id::text from public.record_audit_log(
-    (select organization_id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
-    (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
-    'ticket',
-    '50000000-0000-0000-0000-000000000001',
-    'checked_in',
-    null,
-    '{}'::jsonb
-  )),
-  '00000000-0000-0000-0000-000000000001',
-  'auditoria preenche o ator a partir da sessão'
+select throws_ok(
+  $$
+    select public.record_audit_log(
+      (select organization_id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      'ticket',
+      '50000000-0000-0000-0000-000000000001',
+      'checked_in',
+      null,
+      '{}'::jsonb
+    );
+  $$,
+  '42501',
+  'permission denied for function record_audit_log',
+  'owner não executa o RPC genérico de auditoria'
 );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', true);
@@ -383,6 +386,29 @@ select throws_ok(
   '42501',
   'permission denied for table audit_logs',
   'cliente não escreve auditoria diretamente'
+);
+
+select throws_ok(
+  $$
+    select public.record_audit_log(
+      (select organization_id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      'ticket',
+      '50000000-0000-0000-0000-000000000001',
+      'forged',
+      null,
+      '{}'::jsonb
+    );
+  $$,
+  '42501',
+  'permission denied for function record_audit_log',
+  'gate não executa o RPC genérico de auditoria'
+);
+
+select is(
+  (select count(*)::int from public.audit_logs),
+  0,
+  'tentativas negadas não criam entradas de auditoria'
 );
 
 select is(
