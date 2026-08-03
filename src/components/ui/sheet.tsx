@@ -66,8 +66,7 @@ function SheetContent({
               <Button variant="ghost" className="absolute top-2 right-2" size="icon" />
             }
           >
-            <XIcon
-            />
+            <XIcon aria-hidden="true" />
             <span className="sr-only">Fechar</span>
           </SheetPrimitive.Close>
         )}

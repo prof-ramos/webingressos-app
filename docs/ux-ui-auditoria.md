@@ -123,13 +123,13 @@ Agora: abrir menu 44×44, fechar sheet 44×44, menu da conta 44px, itens do drop
 `CardTitle` renderiza `<div>`. O resultado era um outline onde os títulos de seção não
 existiam, mas os itens filhos eram `h3`:
 
-```
+```text
 H1 Visão geral · H2 Resumo da operação · H3 Organização e evento · H3 Lotes e pedidos …
 ```
 
 `CardTitle` ganhou a prop opcional `as` e os títulos de card passaram a `h2`:
 
-```
+```text
 H1 Visão geral · H2 Resumo da operação · H2 Próxima fatia de operação
 · H3 Organização e evento … · H2 Operação segura por padrão
 ```
@@ -247,6 +247,56 @@ auditoria — o menu nunca funcionou. Corrigido envolvendo rótulo e itens em
 Verificado depois da correção: os três itens renderizam, sem erro de página, e
 `POST /auth/sign-out` leva de fato a `/login`.
 
+### 1.25 "Encerrar sessão" só funcionava com o mouse
+
+Apontado na revisão da PR #4 e confirmado por teste: com o `<form>` renderizado **como** o
+`DropdownMenuItem`, o foco de teclado caía no próprio form e `Enter` não disparava nada — só
+`keydown` e `keyup`, nenhum `click`. Logout era inalcançável por teclado.
+
+Duas coisas eram necessárias:
+
+1. Inverter o aninhamento — o form envolve o item, e o item **é** o `button type="submit"`.
+2. Passar `nativeButton` ao `DropdownMenuItem`. O Base UI assume elemento não-nativo por padrão
+   e intercepta `Enter`/`Espaço`; sem essa prop ele engolia o envio mesmo com o foco no botão
+   certo.
+
+Verificado nos três caminhos de ativação: `Enter`, `Espaço` e mouse levam a `/login`.
+
+### 1.26 Redirecionamento aberto no `?next=`
+
+Também da revisão da PR #4, e confirmado: a validação por prefixo de string deixava passar
+`?next=%2F%5Cevil.example`. `searchParams.get` decodifica para `/\evil.example`, que começa com
+`/` e não com `//` — mas o parser de URL normaliza a barra invertida e resolve para
+`https://evil.example/`. Depois do login, `router.replace` faria a navegação externa.
+
+Corrigido comparando a origem já parseada, como a rota de callback sempre fez. Verificado:
+
+| `?next=` | Decodificado | Destino |
+| --- | --- | --- |
+| `%2Feventos` | `/eventos` | `/eventos` |
+| `%2F%5Cevil.example` | `/\evil.example` | `/dashboard` |
+| `%2F%2Fevil.example` | `//evil.example` | `/dashboard` |
+| `https%3A%2F%2Fevil.example` | `https://evil.example` | `/dashboard` |
+
+### 1.27 Ajustes menores da revisão
+
+- **Identidade lida com `getClaims`.** O layout usava `auth.getUser()`, que faz uma requisição
+  ao serviço de Auth em cada render inicial — o proxy já validou o JWT. `getClaims()` verifica
+  o token localmente e o e-mail está em `JwtPayload.email`, então o rótulo deixou de custar uma
+  ida à rede e passou a seguir o invariante de `AGENTS.md`.
+- **Logout que falha não finge sucesso.** `POST /auth/sign-out` ignorava o erro de `signOut()` e
+  redirecionava como se tivesse dado certo, podendo deixar a sessão viva. Agora o erro leva a
+  `/login?erro=logout` e a tela avisa que a sessão anterior pode não ter sido encerrada.
+- **Erro de login pelo código, não pelo texto.** A comparação era com
+  `signInError.message === "Invalid login credentials"`. Passou a usar `signInError.code`, que é
+  estável — e o valor correto no `@supabase/auth-js` instalado é `invalid_credentials`, não o
+  `invalid_login_credentials` sugerido na revisão.
+- **`--primary-strong` referencia `var(--brand-800)`** em vez de repetir `#0a4d32`.
+- **Carregamento da métrica anunciado:** `aria-busy` no contêiner e `sr-only` com
+  "Carregando {label}", com o `Skeleton` marcado como decorativo.
+- **`XIcon` do sheet** ganhou `aria-hidden="true"`, já que o texto `Fechar` nomeia o controle.
+- **README** deixou de listar logout como inexistente.
+
 ### 1.23 Alturas dos controles fora da escala do design
 
 As primitivas do shadcn nasceram com `h-8` (32px) em botão, input e select trigger — abaixo dos
@@ -309,23 +359,23 @@ Itens reais que ficaram fora desta rodada, em ordem de impacto.
 
 ### Médio
 
-5. **`Card` usa `ring-1 ring-foreground/10` em vez da hairline `--outline`.** Além disso todo
+1. **`Card` usa `ring-1 ring-foreground/10` em vez da hairline `--outline`.** Além disso todo
    card passava `border-border` sem classe de largura, o que não pintava nada.
-6. **Sem hover de card.** `DESIGN.md` define o único estado interativo do sistema (subir 2px,
+2. **Sem hover de card.** `DESIGN.md` define o único estado interativo do sistema (subir 2px,
    borda esverdeada, sombra um passo acima). Nenhum card é clicável ainda; vale implementar
    junto com o primeiro card navegável.
-7. **`database.types.ts` não está ligado aos clientes.** Não é UI, mas é o que vai garantir que
+3. **`database.types.ts` não está ligado aos clientes.** Não é UI, mas é o que vai garantir que
    as telas de dados não inventem campos.
-8. **Sem `.env.example`,** apesar de o README mandar copiá-lo.
+4. **Sem `.env.example`,** apesar de o README mandar copiá-lo.
 
 ### Baixo
 
-9. **Sem página de erro global** (`app/global-error.tsx`) para falhas no layout raiz.
-10. **`BrandMark` usa a letra "W"** em vez de um logotipo. Combinar com a landing page.
-11. **Contraste de texto ambiente:** `text-ink-500` (#8a92a3) sobre `#f9fafc` fica em ~2.6:1.
-    `DESIGN.md` aceita que essa camada seja "ambiente", mas hoje ela carrega informação de
-    estado ("Dados aparecerão após a conexão", detalhes das métricas). Ou o texto sobe para
-    `ink-600`, ou a informação não deveria estar nele.
+1. **Sem página de erro global** (`app/global-error.tsx`) para falhas no layout raiz.
+2. **`BrandMark` usa a letra "W"** em vez de um logotipo. Combinar com a landing page.
+3. **Contraste de texto ambiente:** `text-ink-500` (#8a92a3) sobre `#f9fafc` fica em ~2.6:1.
+   `DESIGN.md` aceita que essa camada seja "ambiente", mas hoje ela carrega informação de
+   estado ("Dados aparecerão após a conexão", detalhes das métricas). Ou o texto sobe para
+   `ink-600`, ou a informação não deveria estar nele.
 
 ---
 

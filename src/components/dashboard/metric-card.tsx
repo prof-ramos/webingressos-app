@@ -27,9 +27,12 @@ export function MetricCard({
             <Icon className="size-[18px]" aria-hidden="true" />
           </span>
         </div>
-        <div>
+        <div aria-busy={isLoading || undefined}>
           {isLoading ? (
-            <Skeleton className="h-9 w-20 rounded-lg" />
+            <>
+              <Skeleton aria-hidden="true" className="h-9 w-20 rounded-lg" />
+              <span className="sr-only">Carregando {label}</span>
+            </>
           ) : (
             <p className="text-3xl font-extrabold tracking-[-0.04em] text-ink-900">
               {value ?? (

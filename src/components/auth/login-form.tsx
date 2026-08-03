@@ -54,7 +54,7 @@ export function LoginForm({
   const signOutFailed = searchParams.get("erro") === "logout"
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit} noValidate={false}>
       {signOutFailed && (
         <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
           Não foi possível encerrar a sessão anterior por completo. Entre novamente para confirmar
@@ -74,6 +74,7 @@ export function LoginForm({
           onChange={(event) => setEmail(event.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
+          className="h-12"
         />
       </div>
       <div className="space-y-2">
@@ -88,6 +89,7 @@ export function LoginForm({
           onChange={(event) => setPassword(event.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
+          className="h-12"
         />
       </div>
       {error && (
@@ -99,7 +101,12 @@ export function LoginForm({
           {error}
         </p>
       )}
-      <Button type="submit" size="lg" disabled={isPending} aria-busy={isPending} className="w-full">
+      <Button
+        type="submit"
+        disabled={isPending}
+        aria-busy={isPending}
+        className="h-12 w-full rounded-lg font-bold"
+      >
         {isPending ? "Entrando…" : "Entrar"}
       </Button>
     </form>

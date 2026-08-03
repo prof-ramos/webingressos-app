@@ -9,7 +9,7 @@
   --popover: #ffffff;
   --popover-foreground: #1b2740;
   --primary: #0e6340;
-  --primary-strong: #0a4d32;
+  --primary-strong: var(--brand-800);
   --primary-foreground: #ffffff;
   --secondary: #eaf5ef;
   --secondary-foreground: #0a4d32;
