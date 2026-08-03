@@ -7,7 +7,7 @@
 > `plans/README.md`, unless a reviewer dispatched you and told you they maintain
 > the index.
 >
-> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803080000_orders_privacy.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md`
+> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803071005_orders_privacy.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts with the live files. A mismatch is a STOP condition.
 
@@ -82,7 +82,7 @@ read shape.
 
 **In scope** — only these files may be modified:
 
-- `supabase/migrations/20260803080000_orders_privacy.sql` (create; if this
+- `supabase/migrations/20260803071005_orders_privacy.sql` (create; if this
   filename exists, stop and choose a later migration name)
 - `supabase/tests/database/rls_and_check_in.sql`
 - `src/lib/supabase/database.types.ts` (generated only)
@@ -113,10 +113,12 @@ non-PII operational list work: `id`, `public_id`, `event_id`, `promoter_id`,
 `security_invoker = true` option so the caller's RLS context is used when the
 view reads `public.orders`.
 
-Revoke `select` on `public.orders` from `authenticated`, retain the existing
-row policy for the underlying table, and grant `select` on the safe view to
-`authenticated`. Do not grant the raw table back through a later statement. Keep
-existing insert/update grants unchanged for now; no app path currently uses them.
+Revoke table-level `select` on `public.orders` from `authenticated`, retain the
+existing row policy for the underlying table, and grant only the nine operational
+columns required by the security-invoker view to `authenticated`. Grant `select`
+on the safe view as well. Do not grant any `buyer_*` column or the raw table back
+through a later statement. Keep existing insert/update grants unchanged for now;
+no app path currently uses them.
 If a future PostgREST mutation needs a returned row, it must use a minimal return
 or an explicit safe RPC rather than restoring raw-table select.
 

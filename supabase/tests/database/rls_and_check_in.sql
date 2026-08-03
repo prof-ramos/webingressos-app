@@ -1,6 +1,6 @@
 begin;
 
-select plan(51);
+select plan(96);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
@@ -80,12 +80,24 @@ select '30000000-0000-0000-0000-000000000002', id, 'Lote B', 3000
 from public.events
 where public_id = '20000000-0000-0000-0000-000000000002';
 
-insert into public.orders (public_id, event_id, status, total_cents, created_by)
+insert into public.orders (
+  public_id,
+  event_id,
+  status,
+  total_cents,
+  buyer_name,
+  buyer_email,
+  buyer_phone,
+  created_by
+)
 select
   '40000000-0000-0000-0000-000000000001',
   id,
   'confirmed',
   2500,
+  'Cliente de teste A',
+  'buyer-a@example.test',
+  'phone-a-fixture',
   '00000000-0000-0000-0000-000000000001'
 from public.events
 where public_id = '20000000-0000-0000-0000-000000000001';
@@ -281,6 +293,38 @@ select is(
 );
 
 select is(
+  (select count(*)::int
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  1,
+  'owner consegue consultar o pedido pela visão operacional'
+);
+
+select is(
+  (select concat(status::text, ':', total_cents::text, ':', currency)
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  'confirmed:2500:BRL',
+  'visão operacional retorna apenas os campos comerciais necessários'
+);
+
+select results_eq(
+  $$
+    select order_public_id, buyer_name, buyer_email, buyer_phone
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001')
+  $$,
+  $$
+    values (
+      '40000000-0000-0000-0000-000000000001'::uuid,
+      'Cliente de teste A'::text,
+      'buyer-a@example.test'::text,
+      'phone-a-fixture'::text
+    )
+  $$,
+  'owner consegue consultar detalhes do cliente pela função privilegiada'
+);
+
+select is(
   (select status from public.check_in_ticket(
     'ticket-a-001',
     '20000000-0000-0000-0000-000000000001',
@@ -365,6 +409,24 @@ select is(
   'membro de outra organização vê somente o próprio evento'
 );
 
+select is(
+  (select count(*)::int
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  0,
+  'organização B não vê pedido do evento A na visão operacional'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001');
+  $$,
+  '42501',
+  'Not authorized to access order',
+  'organização B não consulta detalhes do pedido A'
+);
+
 select set_config(
   'test.order_b_item_id',
   (select item.id::text
@@ -416,8 +478,8 @@ select throws_ok(
     where public_id = '20000000-0000-0000-0000-000000000001';
   $$,
   '42501',
-  'Event ownership fields are immutable',
-  'proprietário do evento não pode transferir a posse por update'
+  'permission denied for table events',
+  'proprietário do evento não transfere a posse por update'
 );
 
 select throws_ok(
@@ -456,6 +518,33 @@ select set_config(
   'request.jwt.claims',
   '{"sub":"00000000-0000-0000-0000-000000000003","role":"authenticated"}',
   true
+);
+
+select is(
+  (select count(*)::int
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  1,
+  'gate consulta pedidos do evento sem dados de cliente'
+);
+
+select throws_ok(
+  $$
+    select * from public.orders;
+  $$,
+  '42501',
+  'permission denied for table orders',
+  'gate não consulta a tabela bruta de pedidos'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001');
+  $$,
+  '42501',
+  'Not authorized to access order',
+  'gate não consulta dados pessoais do comprador'
 );
 
 select throws_ok(
@@ -513,6 +602,442 @@ select is(
   (select count(*)::int from public.ledger_entries),
   0,
   'gate não consegue consultar lançamentos financeiros'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    insert into public.events (public_id, organization_id, name, status, created_by)
+    select
+      '20000000-0000-0000-0000-000000000099',
+      organization.id,
+      'Evento status forjado',
+      'vendas_abertas',
+      (select auth.uid())
+    from public.organizations organization
+    where organization.public_id = '10000000-0000-0000-0000-000000000001';
+  $$,
+  '42501',
+  'new row violates row-level security policy for table "events"',
+  'novo evento não escolhe status fora de rascunho'
+);
+
+insert into public.events (public_id, organization_id, name, status, created_by)
+select
+  draft.public_id,
+  organization.id,
+  draft.name,
+  'rascunho',
+  (select auth.uid())
+from (
+  values
+    ('20000000-0000-0000-0000-000000000003'::uuid, 'Evento ciclo C'::text),
+    ('20000000-0000-0000-0000-000000000004'::uuid, 'Evento ciclo D'::text),
+    ('20000000-0000-0000-0000-000000000005'::uuid, 'Evento ciclo E'::text),
+    ('20000000-0000-0000-0000-000000000006'::uuid, 'Evento ciclo F'::text),
+    ('20000000-0000-0000-0000-000000000007'::uuid, 'Evento ciclo G'::text),
+    ('20000000-0000-0000-0000-000000000008'::uuid, 'Evento ciclo H'::text),
+    ('20000000-0000-0000-0000-000000000009'::uuid, 'Evento ciclo I'::text)
+) as draft(public_id, name)
+cross join public.organizations organization
+where organization.public_id = '10000000-0000-0000-0000-000000000001';
+
+select is(
+  (select count(*)::int
+   from public.event_status_history history
+   join public.events event_record on event_record.id = history.event_id
+   where event_record.public_id = '20000000-0000-0000-0000-000000000003'),
+  1,
+  'novo evento cria uma entrada inicial de histórico'
+);
+
+select is(
+  (select concat(
+     coalesce(history.from_status::text, 'null'),
+     '>',
+     history.to_status::text,
+     '|',
+     history.actor_user_id::text
+   )
+   from public.event_status_history history
+   join public.events event_record on event_record.id = history.event_id
+   where event_record.public_id = '20000000-0000-0000-0000-000000000003'),
+  'null>rascunho|00000000-0000-0000-0000-000000000001',
+  'histórico inicial deriva status e ator da criação confiável'
+);
+
+update public.events
+set name = 'Evento ciclo C atualizado'
+where public_id = '20000000-0000-0000-0000-000000000003';
+
+select is(
+  (select name from public.events where public_id = '20000000-0000-0000-0000-000000000003'),
+  'Evento ciclo C atualizado',
+  'owner ainda edita detalhes não relacionados ao status'
+);
+
+select throws_ok(
+  $$
+    update public.events
+    set status = 'planejado'
+    where public_id = '20000000-0000-0000-0000-000000000003';
+  $$,
+  '42501',
+  'permission denied for table events',
+  'cliente não atualiza status diretamente'
+);
+
+select throws_ok(
+  $$
+    insert into public.event_status_history (
+      event_id, from_status, to_status, actor_user_id, reason
+    )
+    values (
+      (select id from public.events where public_id = '20000000-0000-0000-0000-000000000003'),
+      'rascunho',
+      'planejado',
+      (select auth.uid()),
+      'histórico forjado'
+    );
+  $$,
+  '42501',
+  'permission denied for table event_status_history',
+  'cliente não insere histórico diretamente'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000003', 'planejado')),
+  'planejado',
+  'rascunho avança para planejado'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000003', 'vendas_abertas')),
+  'vendas_abertas',
+  'planejado avança para vendas abertas'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000003', 'encerrado')),
+  'encerrado',
+  'vendas abertas avança para encerrado'
+);
+
+select is(
+  (select status::text
+   from public.transition_event(
+     '20000000-0000-0000-0000-000000000003',
+     'prestacao_contas_fechada',
+     'prestação conferida'
+   )),
+  'prestacao_contas_fechada',
+  'encerrado avança para prestação de contas fechada'
+);
+
+select is(
+  (select count(*)::int
+   from public.event_status_history history
+   join public.events event_record on event_record.id = history.event_id
+   where event_record.public_id = '20000000-0000-0000-0000-000000000003'),
+  5,
+  'cada transição válida cria exatamente um histórico'
+);
+
+select is(
+  (select concat(
+     history.from_status::text,
+     '>',
+     history.to_status::text,
+     '|',
+     history.actor_user_id::text,
+     '|',
+     history.reason
+   )
+   from public.event_status_history history
+   join public.events event_record on event_record.id = history.event_id
+   where event_record.public_id = '20000000-0000-0000-0000-000000000003'
+   order by history.id desc
+   limit 1),
+  'encerrado>prestacao_contas_fechada|00000000-0000-0000-0000-000000000001|prestação conferida',
+  'histórico registra origem, destino, ator e motivo da transição'
+);
+
+select is(
+  (select status::text
+   from public.transition_event(
+     '20000000-0000-0000-0000-000000000004',
+     'cancelado',
+     'cancelamento em rascunho'
+   )),
+  'cancelado',
+  'rascunho pode ser cancelado com motivo'
+);
+
+select is(
+  (select reason
+   from public.event_status_history history
+   join public.events event_record on event_record.id = history.event_id
+   where event_record.public_id = '20000000-0000-0000-0000-000000000004'
+     and history.to_status = 'cancelado'),
+  'cancelamento em rascunho',
+  'cancelamento em rascunho preserva o motivo'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000005', 'planejado')),
+  'planejado',
+  'evento planejado inicia sua transição a partir de rascunho'
+);
+
+select is(
+  (select status::text
+   from public.transition_event(
+     '20000000-0000-0000-0000-000000000005',
+     'cancelado',
+     'cancelamento em planejamento'
+   )),
+  'cancelado',
+  'planejado pode ser cancelado com motivo'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000006', 'planejado')),
+  'planejado',
+  'evento em vendas inicia sua transição a partir de rascunho'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000006', 'vendas_abertas')),
+  'vendas_abertas',
+  'evento em vendas alcança vendas abertas'
+);
+
+select is(
+  (select status::text
+   from public.transition_event(
+     '20000000-0000-0000-0000-000000000006',
+     'cancelado',
+     'cancelamento em vendas'
+   )),
+  'cancelado',
+  'vendas abertas pode ser cancelado com motivo'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000007', 'planejado')),
+  'planejado',
+  'evento encerrado inicia sua transição a partir de rascunho'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000007', 'vendas_abertas')),
+  'vendas_abertas',
+  'evento encerrado alcança vendas abertas'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000007', 'encerrado')),
+  'encerrado',
+  'evento cancelável alcança encerrado'
+);
+
+select is(
+  (select status::text
+   from public.transition_event(
+     '20000000-0000-0000-0000-000000000007',
+     'cancelado',
+     'cancelamento antes da prestação'
+   )),
+  'cancelado',
+  'encerrado pode ser cancelado com motivo'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event('20000000-0000-0000-0000-000000000008', 'vendas_abertas');
+  $$,
+  '22023',
+  'Invalid event status transition',
+  'transição não pode pular etapas'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event('20000000-0000-0000-0000-000000000009', 'cancelado');
+  $$,
+  '22023',
+  'Reason required for event status transition',
+  'cancelamento exige motivo não vazio'
+);
+
+select is(
+  (select status::text from public.events where public_id = '20000000-0000-0000-0000-000000000009'),
+  'rascunho',
+  'transição recusada não altera o status'
+);
+
+select is(
+  (select status::text
+   from public.transition_event('20000000-0000-0000-0000-000000000008', 'planejado')),
+  'planejado',
+  'evento usado para transições inválidas pode avançar validamente'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event('20000000-0000-0000-0000-000000000008', 'planejado');
+  $$,
+  '22023',
+  'Invalid event status transition',
+  'transição para o mesmo status é recusada'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event('20000000-0000-0000-0000-000000000008', 'rascunho');
+  $$,
+  '22023',
+  'Invalid event status transition',
+  'transição para trás é recusada'
+);
+
+select is(
+  (select count(*)::int
+   from public.event_status_history history
+   join public.events event_record on event_record.id = history.event_id
+   where event_record.public_id = '20000000-0000-0000-0000-000000000008'),
+  2,
+  'transições inválidas não duplicam o histórico'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event(
+      '20000000-0000-0000-0000-000000000004',
+      'planejado'
+    );
+  $$,
+  '22023',
+  'Invalid event status transition',
+  'evento cancelado não pode voltar ao fluxo'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event(
+      '20000000-0000-0000-0000-000000000003',
+      'cancelado',
+      'cancelamento posterior'
+    );
+  $$,
+  '22023',
+  'Invalid event status transition',
+  'prestação de contas fechada não pode mudar de status'
+);
+
+select is(
+  (select count(*)::int
+   from public.event_status_history history
+   join public.events event_record on event_record.id = history.event_id
+   where event_record.public_id = '20000000-0000-0000-0000-000000000003'),
+  5,
+  'transição inválida não cria histórico adicional'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000003","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event(
+      '20000000-0000-0000-0000-000000000001',
+      'encerrado',
+      'tentativa gate'
+    );
+  $$,
+  '42501',
+  'Not authorized to transition event',
+  'gate não transiciona eventos'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000005', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000005","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.transition_event(
+      '20000000-0000-0000-0000-000000000001',
+      'encerrado',
+      'tentativa colaborador'
+    );
+  $$,
+  '42501',
+  'Not authorized to transition event',
+  'colaborador não transiciona eventos'
+);
+
+select is(
+  (select count(*)::int
+   from information_schema.columns
+   where table_schema = 'public'
+     and table_name = 'orders_operational'
+     and column_name in ('buyer_name', 'buyer_email', 'buyer_phone')),
+  0,
+  'visão operacional não possui colunas de dados pessoais'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000004","role":"authenticated"}',
+  true
+);
+
+select results_eq(
+  $$
+    select order_public_id, buyer_name, buyer_email, buyer_phone
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001')
+  $$,
+  $$
+    values (
+      '40000000-0000-0000-0000-000000000001'::uuid,
+      'Cliente de teste A'::text,
+      'buyer-a@example.test'::text,
+      'phone-a-fixture'::text
+    )
+  $$,
+  'finance consulta detalhes do cliente pela função privilegiada'
 );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);

@@ -413,6 +413,13 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_operational"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orders: {
@@ -613,7 +620,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      orders_operational: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          event_id: number | null
+          id: number | null
+          promoter_id: number | null
+          public_id: string | null
+          status: Database["public"]["Enums"]["order_status"] | null
+          total_cents: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          event_id?: number | null
+          id?: number | null
+          promoter_id?: number | null
+          public_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_cents?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          event_id?: number | null
+          id?: number | null
+          promoter_id?: number | null
+          public_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_ledger_entry: {
@@ -654,6 +711,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_order_customer: {
+        Args: { target_order_public_id: string }
+        Returns: {
+          buyer_email: string
+          buyer_name: string
+          buyer_phone: string
+          order_public_id: string
+        }[]
+      }
       has_event_role: {
         Args: {
           allowed_roles: Database["public"]["Enums"]["organization_role"][]
@@ -665,6 +731,13 @@ export type Database = {
         Args: {
           allowed_roles: Database["public"]["Enums"]["organization_role"][]
           target_organization_id: number
+        }
+        Returns: boolean
+      }
+      is_event_status_transition_allowed: {
+        Args: {
+          current_status: Database["public"]["Enums"]["event_status"]
+          target_status: Database["public"]["Enums"]["event_status"]
         }
         Returns: boolean
       }
@@ -709,6 +782,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      transition_event: {
+        Args: {
+          target_event_public_id: string
+          target_reason?: string
+          target_to_status: Database["public"]["Enums"]["event_status"]
+        }
+        Returns: {
+          public_id: string
+          status: Database["public"]["Enums"]["event_status"]
+        }[]
       }
     }
     Enums: {
