@@ -34,3 +34,22 @@ As credenciais estão sendo mantidas no 1Password, vault `webingressos`, nos ite
 Os testes pgTAP em `supabase/tests/database/` validam isolamento entre organizações,
 papéis de `gate` e `finance`, além da idempotência do check-in. Execute `pnpm supabase:test`;
 o comando usa o banco local do Supabase e não altera o ambiente remoto.
+
+## Ciclo de vida de eventos
+
+O status só muda pela RPC `transition_event(uuid, event_status, text)`, que valida papel
+`owner`/`ops`, bloqueia a linha, aplica a matriz e grava o histórico na mesma transação:
+
+| Status atual | Próximos status |
+| --- | --- |
+| `rascunho` | `planejado`, `cancelado` |
+| `planejado` | `vendas_abertas`, `cancelado` |
+| `vendas_abertas` | `encerrado`, `cancelado` |
+| `encerrado` | `prestacao_contas_fechada`, `cancelado` |
+| `prestacao_contas_fechada` | nenhum |
+| `cancelado` | nenhum |
+
+Cancelamento e fechamento da prestação exigem motivo. Clientes só podem criar eventos em
+`rascunho`; a criação grava o primeiro histórico via trigger confiável. A edição direta
+fica limitada aos detalhes `name`, `starts_at` e `ends_at`, sem conceder atualização de
+`status`, posse ou organização.

@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -664,9 +659,56 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_event_status_transition_allowed: {
+        Args: {
+          current_status: Database["public"]["Enums"]["event_status"]
+          target_status: Database["public"]["Enums"]["event_status"]
+        }
+        Returns: boolean
+      }
       is_org_member: {
         Args: { target_organization_id: number }
         Returns: boolean
+      }
+      record_audit_log: {
+        Args: {
+          target_action: string
+          target_entity_public_id: string
+          target_entity_type: string
+          target_event_id: number
+          target_metadata?: Json
+          target_organization_id: number
+          target_reason?: string
+        }
+        Returns: {
+          action: string
+          actor_user_id: string | null
+          entity_public_id: string
+          entity_type: string
+          event_id: number | null
+          id: number
+          metadata: Json
+          occurred_at: string
+          organization_id: number
+          reason: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      transition_event: {
+        Args: {
+          target_event_public_id: string
+          target_reason?: string
+          target_to_status: Database["public"]["Enums"]["event_status"]
+        }
+        Returns: {
+          public_id: string
+          status: Database["public"]["Enums"]["event_status"]
+        }[]
       }
     }
     Enums: {

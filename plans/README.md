@@ -12,7 +12,7 @@ and update the status row when the plan is complete.
 | 001 | Establish an application verification baseline | P1 | L | — | DONE | [#5](https://github.com/prof-ramos/webingressos-app/issues/5) |
 | 002 | Restrict audit-log creation to trusted database operations | P1 | M | 001 | TODO | [#6](https://github.com/prof-ramos/webingressos-app/issues/6) |
 | 003 | Remove order PII from the general authenticated surface | P1 | M | 001 | TODO | [#7](https://github.com/prof-ramos/webingressos-app/issues/7) |
-| 004 | Enforce the event lifecycle and status history | P1 | L | 001 | TODO | [#8](https://github.com/prof-ramos/webingressos-app/issues/8) |
+| 004 | Enforce the event lifecycle and status history | P1 | L | 001 | DONE | [#8](https://github.com/prof-ramos/webingressos-app/issues/8) |
 | 005 | Enforce ledger approval and payment invariants | P1 | M | 001, 002 | TODO | [#9](https://github.com/prof-ramos/webingressos-app/issues/9) |
 
 Status values: `TODO` | `IN PROGRESS` | `DONE` | `BLOCKED` (with a one-line
