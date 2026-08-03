@@ -15,7 +15,8 @@ eventos universitários. A landing page comercial vive em outro repositório
 autenticação, checkout ou backoffice deve ir para lá.
 
 **Estado atual: fundação.** Existem shell visual, contratos de domínio, camada SSR do
-Supabase e o schema com RLS. Não existem fluxos de negócio conectados, testes nem CI.
+Supabase e o schema com RLS. Não existem fluxos de negócio conectados nem cobertura E2E;
+os gates de aplicação e banco rodam localmente e no CI.
 Ver [Lacunas conhecidas](#lacunas-conhecidas) antes de assumir que algo funciona.
 
 ## Stack
@@ -37,7 +38,8 @@ pnpm install
 pnpm dev              # servidor de desenvolvimento
 pnpm lint             # eslint (flat config, eslint-config-next)
 pnpm typecheck        # tsc --noEmit
-pnpm check            # lint + typecheck + build — rodar antes de concluir qualquer alteração
+pnpm test             # testes da aplicação com Vitest
+pnpm check            # lint + typecheck + testes + build — gate completo da aplicação
 ```
 
 Supabase:
@@ -239,11 +241,12 @@ os tokens do projeto antes de commitar.
 
 Não presuma que estas coisas existem:
 
-- **Sem testes do app, E2E e CI.** A suíte pgTAP em `supabase/tests/database/` cobre RLS e
-  idempotência do check-in, mas ainda não há verificação dos fluxos de interface ou do
-  Next.js. Também não há workflow em `.github/`.
-- **`.env.example` não existe**, apesar de o README mandar copiá-lo. Crie `.env.local`
-  à mão com as duas variáveis públicas.
+- **Sem E2E ou fluxos de negócio conectados.** A suíte Vitest cobre a configuração do app
+  e o workflow em `.github/workflows/ci.yml` executa os gates da aplicação e do banco;
+  a suíte pgTAP em `supabase/tests/database/` continua cobrindo RLS e idempotência do
+  check-in.
+- **Configuração local:** copie `.env.example` para `.env.local` e preencha as duas
+  variáveis públicas. Nenhum segredo entra no exemplo, no repositório ou no CI.
 - **`database.types.ts` é gerado mas não está ligado aos clientes** — nenhum
   `createClient` usa o genérico `Database`. Ligar isso é uma melhoria pendente.
 - **Nenhuma tela lê dados de negócio reais.** Dashboard, módulos e o seletor de organização
