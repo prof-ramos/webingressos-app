@@ -35,6 +35,13 @@ Os testes pgTAP em `supabase/tests/database/` validam isolamento entre organiza�
 papéis de `gate` e `finance`, além da idempotência do check-in. Execute `pnpm supabase:test`;
 o comando usa o banco local do Supabase e não altera o ambiente remoto.
 
+## Auditoria
+
+`audit_logs` é append-only para clientes autenticados: inserts diretos na tabela e a
+execução do RPC genérico `record_audit_log` são negados. Operações confiáveis do banco
+devem registrar o ator, o instante e o alvo dentro da mesma transação; elas podem usar o
+helper interno sem expor uma API que aceite ações arbitrárias do navegador.
+
 ## Pedidos e dados do comprador
 
 `orders` não é uma superfície de leitura geral para o papel `authenticated`. A visão
