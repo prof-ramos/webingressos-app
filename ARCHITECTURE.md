@@ -202,8 +202,9 @@ Esta seção é curta porque quase nada está configurado no repositório.
 
 - **Provedor de nuvem:** Supabase para banco e autenticação. Hospedagem do app não definida
   aqui.
-- **CI/CD:** **não existe.** Não há diretório `.github/` nem qualquer workflow. A única
-  verificação é `pnpm check` (lint + typecheck + build), rodada manualmente.
+- **CI/CD:** **não existe.** Não há diretório `.github/` nem qualquer workflow. As
+  verificações locais são `pnpm check` (lint + typecheck + build) e
+  `pnpm supabase:test` (pgTAP de RLS e check-in).
 - **Monitoramento e logs:** não configurados. Sem APM, sem agregador de logs, sem
   rastreamento de erros.
 - **Configuração de runtime:** duas variáveis públicas, lidas apenas em
@@ -243,8 +244,10 @@ Esta seção é curta porque quase nada está configurado no repositório.
 
 - **Setup local:** `pnpm install`, criar `.env.local` com as duas variáveis públicas,
   `pnpm dev`. Passo a passo no [`README.md`](./README.md).
-- **Frameworks de teste:** **nenhum.** Não há runner instalado, nem teste unitário, de
-  integração ou E2E. Esta é a maior lacuna de qualidade do projeto.
+- **Banco:** pgTAP via `supabase test db --local`, com testes em
+  `supabase/tests/database/rls_and_check_in.sql` para isolamento RLS, papéis de acesso e
+  idempotência do check-in.
+- **Aplicação:** não há testes unitários, de integração do Next.js ou E2E.
 - **Qualidade de código:** ESLint (flat config, `eslint-config-next` com core-web-vitals e
   regras de TypeScript) e `tsc --noEmit` em modo estrito. `pnpm check` encadeia lint,
   typecheck e build.
@@ -257,8 +260,8 @@ Esta seção é curta porque quase nada está configurado no repositório.
 
 Débitos conhecidos, em ordem aproximada de impacto:
 
-1. **Sem testes e sem CI.** Não há rede de segurança para nenhuma das regras de negócio —
-   inclusive a idempotência do check-in, que é a mais crítica.
+1. **Sem testes do app, E2E e CI.** As regras de RLS e a idempotência do check-in já têm
+   cobertura pgTAP local, mas os fluxos de interface ainda não têm rede de segurança.
 2. **Nenhum fluxo de negócio conectado.** Todas as telas são estáticas; o schema existe mas
    ninguém escreve nele pelo app.
 3. **`database.types.ts` gerado mas não ligado.** Nenhum `createClient` usa o genérico

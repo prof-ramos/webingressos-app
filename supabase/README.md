@@ -22,8 +22,15 @@ O primeiro conjunto de tabelas deve acompanhar a fatia vertical descrita em [`..
 supabase link --project-ref zcvkdgethbhgaownygzs
 pnpm supabase:push
 pnpm supabase:types
+pnpm supabase:test
 ```
 
 O link requer a senha do banco no prompt local, ou pode reutilizar a credencial nativa salva pelo Supabase CLI. Ela não deve ser versionada.
 
 As credenciais estão sendo mantidas no 1Password, vault `webingressos`, nos itens `Supabase | webingressos-dev` e `Supabase Database Password | webingressos-dev`. A senha do banco foi redefinida no Dashboard e o item não contém valores expostos no repositório.
+
+## Testes locais
+
+Os testes pgTAP em `supabase/tests/database/` validam isolamento entre organizações,
+papéis de `gate` e `finance`, além da idempotência do check-in. Execute `pnpm supabase:test`;
+o comando usa o banco local do Supabase e não altera o ambiente remoto.

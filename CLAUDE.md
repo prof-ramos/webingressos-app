@@ -46,6 +46,7 @@ Supabase:
 supabase link --project-ref zcvkdgethbhgaownygzs   # senha só no prompt local, nunca versionada
 pnpm supabase:push                                 # aplica supabase/migrations no projeto linkado
 pnpm supabase:types                                # regenera src/lib/supabase/database.types.ts
+pnpm supabase:test                                 # executa os testes pgTAP locais de RLS e check-in
 ```
 
 `pnpm supabase:types` **sobrescreve** `src/lib/supabase/database.types.ts`. O arquivo é
@@ -240,8 +241,9 @@ os tokens do projeto antes de commitar.
 
 Não presuma que estas coisas existem:
 
-- **Sem testes e sem CI.** Não há runner configurado nem workflow em `.github/`.
-  `pnpm check` é a única verificação.
+- **Sem testes do app, E2E e CI.** A suíte pgTAP em `supabase/tests/database/` cobre RLS e
+  idempotência do check-in, mas ainda não há verificação dos fluxos de interface ou do
+  Next.js. Também não há workflow em `.github/`.
 - **`.env.example` não existe**, apesar de o README mandar copiá-lo. Crie `.env.local`
   à mão com as duas variáveis públicas.
 - **`database.types.ts` é gerado mas não está ligado aos clientes** — nenhum

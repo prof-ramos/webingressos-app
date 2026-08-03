@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "check": "pnpm lint && pnpm typecheck && pnpm build",
     "supabase:push": "npx supabase db push --linked",
-    "supabase:types": "npx supabase gen types --linked --lang=typescript > src/lib/supabase/database.types.ts"
+    "supabase:types": "npx supabase gen types --linked --lang=typescript > src/lib/supabase/database.types.ts",
+    "supabase:test": "npx supabase test db --local"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
