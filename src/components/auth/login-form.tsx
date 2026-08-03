@@ -74,7 +74,6 @@ export function LoginForm({
           onChange={(event) => setEmail(event.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
-          className="h-12"
         />
       </div>
       <div className="space-y-2">
@@ -89,7 +88,6 @@ export function LoginForm({
           onChange={(event) => setPassword(event.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
-          className="h-12"
         />
       </div>
       {error && (
@@ -101,12 +99,7 @@ export function LoginForm({
           {error}
         </p>
       )}
-      <Button
-        type="submit"
-        disabled={isPending}
-        aria-busy={isPending}
-        className="h-12 w-full rounded-lg font-bold"
-      >
+      <Button type="submit" size="lg" disabled={isPending} aria-busy={isPending} className="w-full">
         {isPending ? "Entrando…" : "Entrar"}
       </Button>
     </form>

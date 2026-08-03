@@ -232,7 +232,57 @@ Sheet e dropdown animam via `tw-animate-css` sem respeitar a preferência do sis
 Adicionado o bloco de redução de movimento — também alinhado ao "nada além de 200ms de
 transição" de `DESIGN.md`.
 
-### 1.22 Tokens de raio e sombra repetidos à mão
+### 1.22 O menu da conta quebrava ao abrir — **crítico**
+
+Encontrado ao medir as alturas dos itens de menu (a rodada anterior mediu só controles
+fechados). Clicar no avatar lançava `Base UI: MenuGroupContext is missing. Menu group parts
+must be used within <Menu.Group> or <Menu.RadioGroup>` e nenhum item era renderizado: o menu
+abria vazio.
+
+Causa: `DropdownMenuLabel` mapeia para `Menu.GroupLabel`, que o Base UI exige dentro de
+`Menu.Group`, e o rótulo estava solto no topo do conteúdo. O defeito já existia antes desta
+auditoria — o menu nunca funcionou. Corrigido envolvendo rótulo e itens em
+`DropdownMenuGroup`.
+
+Verificado depois da correção: os três itens renderizam, sem erro de página, e
+`POST /auth/sign-out` leva de fato a `/login`.
+
+### 1.23 Alturas dos controles fora da escala do design
+
+As primitivas do shadcn nasceram com `h-8` (32px) em botão, input e select trigger — abaixo dos
+44px de alvo de toque e longe dos 44/48/56px de `DESIGN.md`. Cada tela corrigia por conta
+própria (`h-12` no login, `h-12` no CTA, `h-11` nos cards de erro, `min-h-11` no shell), então
+a escala vivia espalhada em `className` em vez de nas variantes.
+
+As variantes passaram a materializar a escala do design:
+
+| Componente | Antes | Depois | Spec de `DESIGN.md` |
+| --- | --- | --- | --- |
+| `Button` default | 32px, px-2.5, 500 | **44px**, px-5 (20px), 600 | `button-compact` |
+| `Button` lg | 36px, px-2.5, 500 | **56px**, px-6 (24px), 1rem/700 | `button-primary` |
+| `Button` sm / xs | 28px / 24px | 40px / 32px | (densidade, opt-in) |
+| `Button` icon | 32px | **44px** | — |
+| `Input` | 32px, px-2.5, fundo transparente | **48px**, px-4 (16px), 1rem, fundo branco | `input` |
+| `SelectTrigger` | 32px | **48px** | "mesma altura do campo de texto" |
+| Item de menu / select | ~28px | **44px** | (alvo de toque) |
+
+`sm` e `xs` continuam disponíveis para superfícies densas — barras de ferramentas e linhas de
+tabela — mas deixaram de ser o padrão, então descer abaixo de 44px agora é uma escolha
+explícita.
+
+Com as variantes corretas, os ajustes locais saíram: `h-12`/`h-11`/`min-h-11`/`px-5`/
+`font-bold`/`rounded-lg` foram removidos de login, visão geral, `error`, `not-found` e do
+`AppShell`. O CTA primário da visão geral e o botão de entrar passaram a `size="lg"`.
+
+Medido no build de produção: campo de e-mail 48px com 16px de padding, 1rem/400 e fundo
+`rgb(255,255,255)`; botão Entrar 56px com 24px de padding e 1rem/700; links de navegação,
+menu da conta, abrir menu, fechar sheet e itens de menu em 44px; select trigger em 48px.
+
+> `Input` e `SelectTrigger` também passaram de `bg-transparent` para `bg-card`: `DESIGN.md`
+> descreve o campo como "white fill, hairline border", e sobre o canvas `#f9fafc` o fundo
+> transparente fazia o campo se dissolver na página em vez de ler como objeto sobre ela.
+
+### 1.24 Tokens de raio e sombra repetidos à mão
 
 `rounded-[1.25rem]` e `shadow-[0_2px_12px_rgba(27,39,64,0.03)]` estavam copiados em cinco
 lugares, com o valor cru contrariando a regra de usar tokens. Adicionados `--radius-tile`,
@@ -259,24 +309,20 @@ Itens reais que ficaram fora desta rodada, em ordem de impacto.
 
 ### Médio
 
-5. **Alturas dos controles divergem de `DESIGN.md`.** As primitivas do shadcn nascem com
-   `h-8` (32px) em botão e input; `DESIGN.md` pede 48px para input, 44px para botão compacto e
-   56px para o primário. Hoje cada tela corrige com `className`. O certo é ajustar as variantes
-   uma vez — mudança ampla, melhor isolada num commit próprio.
-6. **`Card` usa `ring-1 ring-foreground/10` em vez da hairline `--outline`.** Além disso todo
+5. **`Card` usa `ring-1 ring-foreground/10` em vez da hairline `--outline`.** Além disso todo
    card passava `border-border` sem classe de largura, o que não pintava nada.
-7. **Sem hover de card.** `DESIGN.md` define o único estado interativo do sistema (subir 2px,
+6. **Sem hover de card.** `DESIGN.md` define o único estado interativo do sistema (subir 2px,
    borda esverdeada, sombra um passo acima). Nenhum card é clicável ainda; vale implementar
    junto com o primeiro card navegável.
-8. **`database.types.ts` não está ligado aos clientes.** Não é UI, mas é o que vai garantir que
+7. **`database.types.ts` não está ligado aos clientes.** Não é UI, mas é o que vai garantir que
    as telas de dados não inventem campos.
-9. **Sem `.env.example`,** apesar de o README mandar copiá-lo.
+8. **Sem `.env.example`,** apesar de o README mandar copiá-lo.
 
 ### Baixo
 
-10. **Sem página de erro global** (`app/global-error.tsx`) para falhas no layout raiz.
-11. **`BrandMark` usa a letra "W"** em vez de um logotipo. Combinar com a landing page.
-12. **Contraste de texto ambiente:** `text-ink-500` (#8a92a3) sobre `#f9fafc` fica em ~2.6:1.
+9. **Sem página de erro global** (`app/global-error.tsx`) para falhas no layout raiz.
+10. **`BrandMark` usa a letra "W"** em vez de um logotipo. Combinar com a landing page.
+11. **Contraste de texto ambiente:** `text-ink-500` (#8a92a3) sobre `#f9fafc` fica em ~2.6:1.
     `DESIGN.md` aceita que essa camada seja "ambiente", mas hoje ela carrega informação de
     estado ("Dados aparecerão após a conexão", detalhes das métricas). Ou o texto sobe para
     `ink-600`, ou a informação não deveria estar nele.

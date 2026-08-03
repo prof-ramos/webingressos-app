@@ -63,13 +63,7 @@ function SheetContent({
           <SheetPrimitive.Close
             data-slot="sheet-close"
             render={
-              <Button
-                variant="ghost"
-                // Sheets are the mobile navigation surface, so the close
-                // control keeps a 44px touch target.
-                className="absolute top-2 right-2 size-11"
-                size="icon"
-              />
+              <Button variant="ghost" className="absolute top-2 right-2" size="icon" />
             }
           >
             <XIcon

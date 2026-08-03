@@ -16,7 +16,7 @@ function LoginFormFallback() {
       <span className="sr-only">Carregando formulário de acesso…</span>
       <Skeleton className="h-12 w-full rounded-lg" />
       <Skeleton className="h-12 w-full rounded-lg" />
-      <Skeleton className="h-12 w-full rounded-lg" />
+      <Skeleton className="h-14 w-full rounded-lg" />
     </div>
   )
 }

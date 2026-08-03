@@ -38,7 +38,7 @@ export default function DashboardPage() {
             disabled
             size="lg"
             aria-describedby="criar-evento-motivo"
-            className="h-12 w-full gap-2 rounded-lg px-5 font-bold sm:w-auto"
+            className="w-full sm:w-auto"
           >
             <Plus className="size-4" aria-hidden="true" />
             Criar evento

@@ -24,9 +24,7 @@ export default function DashboardNotFound() {
           O endereço pedido não corresponde a nenhum módulo da operação. Use a navegação lateral para
           voltar a um módulo conhecido.
         </p>
-        <Button render={<Link href="/dashboard" />} className="h-11 rounded-lg px-5 font-bold">
-          Voltar para a visão geral
-        </Button>
+        <Button render={<Link href="/dashboard" />}>Voltar para a visão geral</Button>
       </CardContent>
     </Card>
   )

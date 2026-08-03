@@ -21,9 +21,7 @@ export default function DashboardError({ reset }: { error: Error; reset: () => v
           A operação continua registrada. Tente novamente e, se o erro persistir, avise a equipe
           responsável pelo ambiente.
         </p>
-        <Button onClick={reset} className="h-11 rounded-lg px-5 font-bold">
-          Tentar novamente
-        </Button>
+        <Button onClick={reset}>Tentar novamente</Button>
       </CardContent>
     </Card>
   )

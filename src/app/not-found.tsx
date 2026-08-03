@@ -23,9 +23,7 @@ export default function NotFound() {
             O endereço que você abriu não existe neste app. Verifique o link ou volte para a visão
             geral da operação.
           </p>
-          <Button render={<Link href="/dashboard" />} className="h-11 rounded-lg px-5 font-bold">
-            Ir para a visão geral
-          </Button>
+          <Button render={<Link href="/dashboard" />}>Ir para a visão geral</Button>
         </CardContent>
       </Card>
     </main>
