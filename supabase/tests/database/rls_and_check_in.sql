@@ -1,6 +1,6 @@
 begin;
 
-select plan(24);
+select plan(51);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
@@ -161,6 +161,92 @@ select
   '00000000-0000-0000-0000-000000000001'
 from public.events event_record
 where event_record.public_id = '20000000-0000-0000-0000-000000000001';
+
+select set_config(
+  'test.event_a_id',
+  (select id::text from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+  true
+);
+select set_config(
+  'test.organization_a_id',
+  (select id::text from public.organizations where public_id = '10000000-0000-0000-0000-000000000001'),
+  true
+);
+select set_config(
+  'test.organization_b_id',
+  (select id::text from public.organizations where public_id = '10000000-0000-0000-0000-000000000002'),
+  true
+);
+
+select throws_ok(
+  $$
+    insert into public.ledger_entries (
+      public_id, organization_id, event_id, kind, status,
+      amount_cents, description, created_by
+    )
+    select
+      '60000000-0000-0000-0000-000000000101',
+      event_record.organization_id,
+      event_record.id,
+      'expense',
+      'aprovado',
+      100,
+      'Estado inválido aprovado',
+      '00000000-0000-0000-0000-000000000001'
+    from public.events event_record
+    where event_record.public_id = '20000000-0000-0000-0000-000000000001';
+  $$,
+  '23514',
+  'new row for relation "ledger_entries" violates check constraint "ledger_entries_status_fields_check"',
+  'aprovado exige aprovador'
+);
+
+select throws_ok(
+  $$
+    insert into public.ledger_entries (
+      public_id, organization_id, event_id, kind, status,
+      amount_cents, description, created_by
+    )
+    select
+      '60000000-0000-0000-0000-000000000102',
+      event_record.organization_id,
+      event_record.id,
+      'expense',
+      'pago',
+      100,
+      'Estado inválido pago',
+      '00000000-0000-0000-0000-000000000001'
+    from public.events event_record
+    where event_record.public_id = '20000000-0000-0000-0000-000000000001';
+  $$,
+  '23514',
+  'new row for relation "ledger_entries" violates check constraint "ledger_entries_status_fields_check"',
+  'pago exige aprovador e data de pagamento'
+);
+
+select throws_ok(
+  $$
+    insert into public.ledger_entries (
+      public_id, organization_id, event_id, kind, status,
+      amount_cents, description, created_by, paid_at
+    )
+    select
+      '60000000-0000-0000-0000-000000000103',
+      event_record.organization_id,
+      event_record.id,
+      'expense',
+      'previsto',
+      100,
+      'Estado inválido previsto',
+      '00000000-0000-0000-0000-000000000001',
+      now()
+    from public.events event_record
+    where event_record.public_id = '20000000-0000-0000-0000-000000000001';
+  $$,
+  '23514',
+  'new row for relation "ledger_entries" violates check constraint "ledger_entries_check1"',
+  'previsto não aceita data de pagamento'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
@@ -427,6 +513,365 @@ select is(
   (select count(*)::int from public.ledger_entries),
   0,
   'gate não consegue consultar lançamentos financeiros'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000004","role":"authenticated"}',
+  true
+);
+
+insert into public.ledger_entries (
+  public_id,
+  organization_id,
+  event_id,
+  kind,
+  amount_cents,
+  description,
+  created_by
+)
+values (
+  '60000000-0000-0000-0000-000000000001',
+  current_setting('test.organization_a_id')::bigint,
+  current_setting('test.event_a_id')::bigint,
+  'expense',
+  1200,
+  'Lançamento de teste finance',
+  (select auth.uid())
+);
+
+select is(
+  (select count(*)::int
+   from public.ledger_entries
+   where public_id = '60000000-0000-0000-0000-000000000001'
+     and status = 'previsto'
+     and approved_by is null
+     and paid_at is null),
+  1,
+  'finance cria lançamento apenas como previsto'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+
+insert into public.ledger_entries (
+  public_id,
+  organization_id,
+  event_id,
+  kind,
+  amount_cents,
+  description,
+  created_by
+)
+values (
+  '60000000-0000-0000-0000-000000000002',
+  current_setting('test.organization_a_id')::bigint,
+  current_setting('test.event_a_id')::bigint,
+  'expense',
+  800,
+  'Lançamento de teste owner',
+  (select auth.uid())
+);
+
+select is(
+  (select count(*)::int
+   from public.ledger_entries
+   where public_id = '60000000-0000-0000-0000-000000000002'
+     and status = 'previsto'),
+  1,
+  'owner também cria lançamento previsto'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    insert into public.ledger_entries (
+      public_id, organization_id, event_id, kind,
+      amount_cents, description, created_by
+    )
+    values (
+      '60000000-0000-0000-0000-000000000003',
+      current_setting('test.organization_b_id')::bigint,
+      current_setting('test.event_a_id')::bigint,
+      'expense',
+      500,
+      'Organização incompatível',
+      (select auth.uid())
+    );
+  $$,
+  '23514',
+  'Ledger organization must match event owner organization',
+  'organização B não anexa seu lançamento ao evento A'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000003","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    insert into public.ledger_entries (
+      public_id, organization_id, event_id, kind,
+      amount_cents, description, created_by
+    )
+    values (
+      '60000000-0000-0000-0000-000000000004',
+      current_setting('test.organization_a_id')::bigint,
+      current_setting('test.event_a_id')::bigint,
+      'expense',
+      500,
+      'Lançamento gate',
+      (select auth.uid())
+    );
+  $$,
+  '42501',
+  'new row violates row-level security policy for table "ledger_entries"',
+  'gate não cria lançamentos financeiros'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000004","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    update public.ledger_entries
+    set description = 'alteração direta'
+    where public_id = '60000000-0000-0000-0000-000000000001';
+  $$,
+  '42501',
+  'permission denied for table ledger_entries',
+  'finance não atualiza lançamento diretamente'
+);
+
+select throws_ok(
+  $$
+    delete from public.ledger_entries
+    where public_id = '60000000-0000-0000-0000-000000000001';
+  $$,
+  '42501',
+  'permission denied for table ledger_entries',
+  'finance não apaga lançamento diretamente'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.approve_ledger_entry('60000000-0000-0000-0000-000000000001'::uuid, '   '::text);
+  $$,
+  '22023',
+  'Reason required for ledger entry transition',
+  'aprovação exige motivo não vazio'
+);
+
+select is(
+  (select concat(status::text, '|', approved_by::text, '|', (paid_at is null)::text)
+   from public.ledger_entries
+   where public_id = '60000000-0000-0000-0000-000000000001'),
+  'previsto||true',
+  'aprovação sem motivo não altera o lançamento'
+);
+
+select is(
+  (select status::text
+   from public.approve_ledger_entry(
+     '60000000-0000-0000-0000-000000000001'::uuid,
+     'aprovação conferida'::text
+   )),
+  'aprovado',
+  'finance aprova lançamento previsto com motivo'
+);
+
+select is(
+  (select concat(status::text, '|', approved_by::text, '|', (paid_at is null)::text)
+   from public.ledger_entries
+   where public_id = '60000000-0000-0000-0000-000000000001'),
+  'aprovado|00000000-0000-0000-0000-000000000004|true',
+  'aprovação deriva ator e mantém pagamento vazio'
+);
+
+select is(
+  (select concat(
+     action,
+     '|',
+     actor_user_id::text,
+     '|',
+     entity_type,
+     '|',
+     entity_public_id,
+     '|',
+     reason
+   )
+   from public.audit_logs
+   where entity_public_id = '60000000-0000-0000-0000-000000000001'
+     and action = 'approved'),
+  'approved|00000000-0000-0000-0000-000000000004|ledger_entry|60000000-0000-0000-0000-000000000001|aprovação conferida',
+  'auditoria de aprovação deriva evento, entidade, motivo e ator'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000003","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.approve_ledger_entry('60000000-0000-0000-0000-000000000001'::uuid, 'tentativa gate'::text);
+  $$,
+  '42501',
+  'Not authorized to transition ledger entry',
+  'gate não aprova lançamentos'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.pay_ledger_entry('60000000-0000-0000-0000-000000000001'::uuid, 'tentativa gate'::text);
+  $$,
+  '42501',
+  'Not authorized to transition ledger entry',
+  'gate não paga lançamentos'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000004","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.pay_ledger_entry('60000000-0000-0000-0000-000000000001'::uuid, '   '::text);
+  $$,
+  '22023',
+  'Reason required for ledger entry transition',
+  'pagamento exige motivo não vazio'
+);
+
+select is(
+  (select status::text from public.ledger_entries where public_id = '60000000-0000-0000-0000-000000000001'),
+  'aprovado',
+  'pagamento sem motivo não altera o status aprovado'
+);
+
+select is(
+  (select status::text
+   from public.pay_ledger_entry(
+     '60000000-0000-0000-0000-000000000001'::uuid,
+     'pagamento conferido'::text
+   )),
+  'pago',
+  'finance paga lançamento aprovado com motivo'
+);
+
+select is(
+  (select concat(status::text, '|', approved_by::text, '|', (paid_at is not null)::text)
+   from public.ledger_entries
+   where public_id = '60000000-0000-0000-0000-000000000001'),
+  'pago|00000000-0000-0000-0000-000000000004|true',
+  'pagamento define data e preserva o aprovador'
+);
+
+select is(
+  (select concat(
+     action,
+     '|',
+     actor_user_id::text,
+     '|',
+     entity_type,
+     '|',
+     entity_public_id,
+     '|',
+     reason
+   )
+   from public.audit_logs
+   where entity_public_id = '60000000-0000-0000-0000-000000000001'
+     and action = 'paid'),
+  'paid|00000000-0000-0000-0000-000000000004|ledger_entry|60000000-0000-0000-0000-000000000001|pagamento conferido',
+  'auditoria de pagamento deriva ator e motivo da operação'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.approve_ledger_entry('60000000-0000-0000-0000-000000000001'::uuid, 'segunda aprovação'::text);
+  $$,
+  '22023',
+  'Invalid ledger entry status transition',
+  'aprovação repetida é recusada'
+);
+
+select is(
+  (select count(*)::int
+   from public.audit_logs
+   where entity_public_id = '60000000-0000-0000-0000-000000000001'),
+  2,
+  'aprovação repetida não cria auditoria'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.pay_ledger_entry('60000000-0000-0000-0000-000000000001'::uuid, 'segundo pagamento'::text);
+  $$,
+  '22023',
+  'Invalid ledger entry status transition',
+  'pagamento repetido é recusado'
+);
+
+select is(
+  (select count(*)::int
+   from public.audit_logs
+   where entity_public_id = '60000000-0000-0000-0000-000000000001'),
+  2,
+  'pagamento repetido não cria auditoria'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.pay_ledger_entry('60000000-0000-0000-0000-000000000002'::uuid, 'pagamento sem aprovação'::text);
+  $$,
+  '22023',
+  'Invalid ledger entry status transition',
+  'pagamento direto de previsto é recusado'
+);
+
+select is(
+  (select concat(status::text, '|', (approved_by is null)::text, '|', (paid_at is null)::text)
+   from public.ledger_entries
+   where public_id = '60000000-0000-0000-0000-000000000002'),
+  'previsto|true|true',
+  'pagamento direto não altera lançamento previsto'
 );
 
 reset role;

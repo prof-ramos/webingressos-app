@@ -41,3 +41,12 @@ o comando usa o banco local do Supabase e não altera o ambiente remoto.
 execução do RPC genérico `record_audit_log` são negados. Operações confiáveis do banco
 devem registrar o ator, o instante e o alvo dentro da mesma transação; elas podem usar o
 helper interno sem expor uma API que aceite ações arbitrárias do navegador.
+
+## Lançamentos financeiros
+
+`ledger_entries` só pode ser criado por `owner` ou `finance` como `previsto`, com
+`approved_by` e `paid_at` nulos. A organização do lançamento deve ser a organização dona
+do evento. Aprovação e pagamento usam, respectivamente, `approve_ledger_entry(uuid, text)`
+e `pay_ledger_entry(uuid, text)`: as funções travam a linha, derivam ator e timestamps,
+exigem motivo e registram auditoria na mesma transação. Clients não têm update/delete
+direto; os estados e campos de aprovação/pagamento também são protegidos por constraints.

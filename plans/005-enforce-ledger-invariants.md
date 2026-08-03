@@ -7,7 +7,7 @@
 > `plans/README.md`, unless a reviewer dispatched you and told you they maintain
 > the index.
 >
-> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803100000_ledger_invariants.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md`
+> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803072921_ledger_invariants.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts with the live files. A mismatch is a STOP condition.
 
@@ -91,7 +91,7 @@ actors and timestamps in the database rather than trusting insert fields.
 
 **In scope** — only these files may be modified:
 
-- `supabase/migrations/20260803100000_ledger_invariants.sql` (create; if this
+- `supabase/migrations/20260803072921_ledger_invariants.sql` (create; if this
   filename exists, stop and choose a later migration name)
 - `supabase/tests/database/rls_and_check_in.sql`
 - `src/lib/supabase/database.types.ts` (generated only)
