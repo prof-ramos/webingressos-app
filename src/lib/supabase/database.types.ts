@@ -725,6 +725,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_event_status_transition_allowed: {
+        Args: {
+          current_status: Database["public"]["Enums"]["event_status"]
+          target_status: Database["public"]["Enums"]["event_status"]
+        }
+        Returns: boolean
+      }
       is_org_member: {
         Args: { target_organization_id: number }
         Returns: boolean
@@ -757,6 +764,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      transition_event: {
+        Args: {
+          target_event_public_id: string
+          target_reason?: string
+          target_to_status: Database["public"]["Enums"]["event_status"]
+        }
+        Returns: {
+          public_id: string
+          status: Database["public"]["Enums"]["event_status"]
+        }[]
       }
     }
     Enums: {

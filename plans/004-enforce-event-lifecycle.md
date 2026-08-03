@@ -7,7 +7,7 @@
 > `plans/README.md`, unless a reviewer dispatched you and told you they maintain
 > the index.
 >
-> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803090000_event_lifecycle.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md CONTEXT.md`
+> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803071829_event_lifecycle.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md CONTEXT.md`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts with the live files. A mismatch is a STOP condition.
 
@@ -87,7 +87,7 @@ mutation and history creation into one atomic operation.
 
 **In scope** — only these files may be modified:
 
-- `supabase/migrations/20260803090000_event_lifecycle.sql` (create; if this
+- `supabase/migrations/20260803071829_event_lifecycle.sql` (create; if this
   filename exists, stop and choose a later migration name)
 - `supabase/tests/database/rls_and_check_in.sql`
 - `src/lib/supabase/database.types.ts` (generated only)
@@ -161,9 +161,10 @@ nothing and creates no history row.
 ### Step 3: Remove direct client control over status and history
 
 Revoke table-level update on `events` and insert on `event_status_history` from
-`authenticated`. There is no current application caller that needs direct event
-detail updates at the planned SHA, so do not restore column-level update grants in
-this plan; a future event-detail RPC can be designed separately.
+`authenticated`. Restore only column-level update grants for the editable event
+details `name`, `starts_at`, and `ends_at`; do not grant `status`, `organization_id`,
+or `created_by`. A future event-detail RPC can replace these grants if the product
+needs richer validation.
 
 Change the event insert policy so clients can create only `status = 'rascunho'`
 with `created_by = auth.uid()`. Add an `after insert` security-definer trigger
