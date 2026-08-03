@@ -7,7 +7,7 @@
 > `plans/README.md`, unless a reviewer dispatched you and told you they maintain
 > the index.
 >
-> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803070000_audit_integrity.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md`
+> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- supabase/migrations/20260803070351_audit_integrity.sql supabase/tests/database/rls_and_check_in.sql src/lib/supabase/database.types.ts supabase/README.md`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts with the live files. A mismatch is a STOP condition.
 
@@ -100,7 +100,7 @@ grant.
 
 **In scope** — only these files may be modified:
 
-- `supabase/migrations/20260803070000_audit_integrity.sql` (create; if this
+- `supabase/migrations/20260803070351_audit_integrity.sql` (create; if this
   filename already exists, stop and choose a later migration name)
 - `supabase/tests/database/rls_and_check_in.sql`
 - `src/lib/supabase/database.types.ts` (generated only through the documented
@@ -176,7 +176,7 @@ Update `supabase/README.md` to state that audit rows are created only by trusted
 database operations, direct table inserts and generic authenticated RPC calls
 are denied, and future mutations must record audit data in the same transaction.
 
-**Verify**: `pnpm typecheck` → exit 0; `rg -n "record_audit_log|audit" supabase/README.md supabase/migrations/20260803070000_audit_integrity.sql` → documentation and migration agree; `git diff --check` → no output.
+**Verify**: `pnpm typecheck` → exit 0; `rg -n "record_audit_log|audit" supabase/README.md supabase/migrations/20260803070351_audit_integrity.sql` → documentation and migration agree; `git diff --check` → no output.
 
 ## Test plan
 
