@@ -1,6 +1,6 @@
 begin;
 
-select plan(32);
+select plan(34);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
