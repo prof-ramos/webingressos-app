@@ -673,6 +673,15 @@ export type Database = {
       }
     }
     Functions: {
+      approve_ledger_entry: {
+        Args: { target_entry_public_id: string; target_reason: string }
+        Returns: {
+          approved_by: string
+          paid_at: string
+          public_id: string
+          status: Database["public"]["Enums"]["ledger_entry_status"]
+        }[]
+      }
       can_access_event: { Args: { target_event_id: number }; Returns: boolean }
       check_in_ticket: {
         Args: {
@@ -735,6 +744,15 @@ export type Database = {
       is_org_member: {
         Args: { target_organization_id: number }
         Returns: boolean
+      }
+      pay_ledger_entry: {
+        Args: { target_entry_public_id: string; target_reason: string }
+        Returns: {
+          approved_by: string
+          paid_at: string
+          public_id: string
+          status: Database["public"]["Enums"]["ledger_entry_status"]
+        }[]
       }
       record_audit_log: {
         Args: {
