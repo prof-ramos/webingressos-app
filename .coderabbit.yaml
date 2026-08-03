@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: pt-BR
+
+chat:
+  auto_reply: true
+
+reviews:
+  profile: assertive
+  high_level_summary: true
+  changed_files_summary: true
+  review_status: true
+  collapse_walkthrough: false
+  poem: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  pre_merge_checks:
+    description:
+      mode: warning
+    docstrings:
+      mode: off
+
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/.next/**"
+    - "!**/supabase/.temp/**"
+    - "!pnpm-lock.yaml"
+
+  path_instructions:
+    - path: "src/**/*.{ts,tsx}"
+      instructions: |
+        Revise em português e priorize problemas que possam bloquear o merge.
+
+        - Preserve autenticação fail-closed e autorização no servidor.
+        - Não aceite identidades, organizações, papéis ou permissões fabricados no cliente.
+        - Valide redirects, parâmetros externos e entradas de usuário; nunca introduza open redirects.
+        - Não exponha segredos, tokens ou dados pessoais em código, logs ou mensagens de erro.
+        - Mantenha contratos de domínio alinhados com os tipos gerados do Supabase.
+        - Em componentes React, verifique efeitos assíncronos, cleanup e estados de erro/loading.
+
+    - path: "proxy.ts"
+      instructions: |
+        Trate este arquivo como fronteira de segurança do Next.js.
+
+        - Rotas protegidas devem falhar fechadas quando o Supabase não estiver configurado.
+        - Use auth.getClaims() para verificar a sessão no proxy.
+        - Preserve cookies de refresh corretamente e não confie em dados controlados pelo cliente.
+        - Mudanças no matcher devem ser revisadas quanto a bypass de autenticação.
+
+    - path: "src/lib/supabase/**/*.ts"
+      instructions: |
+        Revise integrações Supabase com foco em segurança de sessão e autorização.
+
+        - Clientes server-side devem usar cookies com @supabase/ssr.
+        - Não use getSession() como mecanismo de autorização no servidor.
+        - Configuração ausente ou inválida deve bloquear rotas protegidas.
+        - Erros de autenticação não devem vazar credenciais, tokens ou detalhes internos.
+
+    - path: "supabase/migrations/**/*.sql"
+      instructions: |
+        Revise como PostgreSQL/Supabase em uma fronteira de segurança multi-tenant.
+
+        - Toda tabela exposta deve ter RLS habilitado, grants mínimos e policies coerentes.
+        - Funções SECURITY DEFINER devem usar SET search_path = '' e referências qualificadas.
+        - Verifique isolamento por organização e evento, inclusive em INSERT, UPDATE e RPCs.
+        - Não permita alterar ownership, forjar actor_user_id/occurred_at ou cruzar entidades entre eventos.
+        - Funções de escrita devem validar auth.uid(), retornar contratos discriminados quando previsto e evitar exceções desnecessárias para fluxos esperados.
+        - Mantenha índices para foreign keys e predicados relevantes de RLS.
+        - Migrações devem ser forward-only, idempotentes quando apropriado e compatíveis com instalações existentes.
+
+    - path: "supabase/tests/database/**/*.sql"
+      instructions: |
+        Exija testes pgTAP para regressões de autorização e integridade.
+
+        - Cubra isolamento entre organizações e eventos.
+        - Cubra papéis owner, ops, finance, gate e membros colaboradores.
+        - Cubra tentativas não autorizadas, cross-event, pedidos pendentes/cancelados e check-in idempotente.
+        - Cubra imutabilidade de ownership, auditoria não forjável e grants mínimos.
+        - Mantenha plan() consistente com o número de asserções e faça rollback dos fixtures.
+
+    - path: "package.json"
+      instructions: |
+        Revise scripts e dependências com foco em supply chain.
+
+        - Use binários locais fixados no lockfile; não introduza npx sem versão.
+        - Não adicione dependências sem necessidade clara e valide scripts de lint, tipos, build e banco.
+
+    - path: "docs/**/*.md"
+      instructions: |
+        Verifique se a documentação descreve o comportamento atual, especialmente autenticação,
+        RLS, configuração obrigatória e limites conhecidos. Não aceite instruções que liberem
+        rotas protegidas ou recomendem segredos no cliente.
