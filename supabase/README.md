@@ -41,3 +41,12 @@ o comando usa o banco local do Supabase e não altera o ambiente remoto.
 execução do RPC genérico `record_audit_log` são negados. Operações confiáveis do banco
 devem registrar o ator, o instante e o alvo dentro da mesma transação; elas podem usar o
 helper interno sem expor uma API que aceite ações arbitrárias do navegador.
+
+## Pedidos e dados do comprador
+
+`orders` não é uma superfície de leitura geral para o papel `authenticated`. A visão
+`orders_operational` usa `security_invoker`, respeita o RLS do pedido e omite os campos de
+comprador; a tabela base concede a esse papel somente as nove colunas operacionais
+necessárias para a view. Detalhes de cliente só podem ser obtidos por
+`get_order_customer(uuid)`, que exige papel `owner`, `ops` ou `finance` no evento; `gate`
+e outras organizações recebem uma negativa de autorização uniforme.

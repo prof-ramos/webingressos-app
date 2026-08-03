@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -418,6 +413,13 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_operational"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orders: {
@@ -618,7 +620,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      orders_operational: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          event_id: number | null
+          id: number | null
+          promoter_id: number | null
+          public_id: string | null
+          status: Database["public"]["Enums"]["order_status"] | null
+          total_cents: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          event_id?: number | null
+          id?: number | null
+          promoter_id?: number | null
+          public_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_cents?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          event_id?: number | null
+          id?: number | null
+          promoter_id?: number | null
+          public_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_access_event: { Args: { target_event_id: number }; Returns: boolean }
@@ -650,6 +702,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_order_customer: {
+        Args: { target_order_public_id: string }
+        Returns: {
+          buyer_email: string
+          buyer_name: string
+          buyer_phone: string
+          order_public_id: string
+        }[]
+      }
       has_event_role: {
         Args: {
           allowed_roles: Database["public"]["Enums"]["organization_role"][]
@@ -667,6 +728,35 @@ export type Database = {
       is_org_member: {
         Args: { target_organization_id: number }
         Returns: boolean
+      }
+      record_audit_log: {
+        Args: {
+          target_action: string
+          target_entity_public_id: string
+          target_entity_type: string
+          target_event_id: number
+          target_metadata?: Json
+          target_organization_id: number
+          target_reason?: string
+        }
+        Returns: {
+          action: string
+          actor_user_id: string | null
+          entity_public_id: string
+          entity_type: string
+          event_id: number | null
+          id: number
+          metadata: Json
+          occurred_at: string
+          organization_id: number
+          reason: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
