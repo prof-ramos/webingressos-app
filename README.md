@@ -57,8 +57,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
 Chaves secretas ou `service_role` não devem aparecer no navegador nem no repositório.
 Todo o `.env*` está no `.gitignore`.
 
-> Sem essas variáveis o app sobe, mas o proxy deixa de proteger as rotas e o login não
-> funciona. É aceitável para inspecionar a interface; não é um estado de execução real.
+> Essas variáveis são obrigatórias para executar o app: sem elas, o proxy bloqueia as rotas
+> protegidas e o login não funciona.
 
 ### Scripts
 

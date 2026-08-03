@@ -8,10 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm lint && pnpm typecheck && pnpm build",
-    "supabase:push": "npx supabase db push --linked",
-    "supabase:types": "npx supabase gen types --linked --lang=typescript > src/lib/supabase/database.types.ts",
-    "supabase:test": "npx supabase test db --local"
+    "check": "npm run lint && npm run typecheck && npm run build",
+    "supabase:push": "supabase db push --linked",
+    "supabase:types": "supabase gen types --linked --lang=typescript > src/lib/supabase/database.types.ts",
+    "supabase:test": "supabase test db --local"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -35,6 +35,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "shadcn": "^4.16.0",
+    "supabase": "2.111.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

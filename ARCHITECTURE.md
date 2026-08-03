@@ -235,10 +235,9 @@ Esta seção é curta porque quase nada está configurado no repositório.
 - **Criptografia:** TLS em trânsito e criptografia em repouso são os padrões da plataforma
   Supabase. Não há criptografia em nível de aplicação nem de coluna.
 
-> **Risco conhecido.** Se as variáveis do Supabase não estiverem definidas,
-> `updateSession` (`src/lib/supabase/proxy.ts:9`) devolve `NextResponse.next()` e **todas as
-> rotas ficam abertas**. É aceitável no desenvolvimento inicial; qualquer ambiente real
-> precisa das variáveis presentes.
+> **Configuração obrigatória.** Se as variáveis do Supabase não estiverem definidas,
+> `updateSession` bloqueia as rotas protegidas e mantém públicas apenas as rotas de login
+> e callback.
 
 ## 8. Ambiente de desenvolvimento e testes
 

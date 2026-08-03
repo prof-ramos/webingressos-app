@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -35,6 +36,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -91,6 +93,30 @@ function WorkspaceSelector() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const [accountEmail, setAccountEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    try {
+      const supabase = createClient()
+      void supabase.auth.getUser().then(({ data }) => {
+        if (isMounted) {
+          setAccountEmail(data.user?.email ?? null)
+        }
+      })
+    } catch {
+      // The proxy blocks protected routes when Supabase is not configured.
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const accountLabel = accountEmail ?? "Conta autenticada"
+  const accountInitials = accountEmail ? accountEmail.slice(0, 2).toUpperCase() : "WI"
+
   return (
     <div className="min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card lg:flex">
@@ -152,11 +178,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }
             >
               <Avatar className="size-8">
-                <AvatarFallback className="bg-brand-100 text-xs font-bold text-brand-800">GR</AvatarFallback>
+                <AvatarFallback className="bg-brand-100 text-xs font-bold text-brand-800">
+                  {accountInitials}
+                </AvatarFallback>
               </Avatar>
               <span className="hidden text-left sm:block">
-                <span className="block text-xs font-bold text-ink-900">Gabriel Ramos</span>
-                <span className="block text-[11px] text-ink-500">Administrador</span>
+                <span className="block max-w-52 truncate text-xs font-bold text-ink-900">
+                  {accountLabel}
+                </span>
+                <span className="block text-[11px] text-ink-500">Acesso verificado</span>
               </span>
               <ChevronDown className="size-4 text-ink-500" aria-hidden="true" />
             </DropdownMenuTrigger>

@@ -116,10 +116,8 @@ O fluxo inteiro passa por três arquivos:
 Use `auth.getClaims()` como mecanismo de autorização no servidor/proxy. **Não** trate
 `getSession()` como autorização.
 
-> **Cuidado:** se as variáveis do Supabase não estiverem definidas,
-> `updateSession` (`src/lib/supabase/proxy.ts:9`) devolve `NextResponse.next()` e **todas
-> as rotas ficam abertas**. Isso é intencional para o dev inicial, mas qualquer ambiente
-> real precisa das variáveis presentes.
+> As variáveis do Supabase são obrigatórias. Sem elas, `updateSession` bloqueia as rotas
+> protegidas e mantém públicas apenas as rotas de login e callback.
 
 ### Módulos de domínio
 
@@ -248,8 +246,8 @@ Não presuma que estas coisas existem:
   à mão com as duas variáveis públicas.
 - **`database.types.ts` é gerado mas não está ligado aos clientes** — nenhum
   `createClient` usa o genérico `Database`. Ligar isso é uma melhoria pendente.
-- **Nenhuma tela lê dados reais.** Dashboard, módulos e o seletor de organização do
-  `AppShell` são estáticos; o nome de usuário no header é placeholder.
+- **Nenhuma tela lê dados de negócio reais.** Dashboard, módulos e o seletor de organização
+  do `AppShell` são estáticos; o e-mail exibido no header vem da sessão autenticada.
 - **`LoginForm` não usa `next`** da query string: sempre redireciona para `/dashboard`.
 - **Logout, recuperação de senha e convites** ainda não estão implementados.
 - Não inventar dados, clientes, resultados ou disponibilidade em nenhuma tela.
