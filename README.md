@@ -26,7 +26,7 @@ Ainda não existe:
 - nenhuma tela lendo dados reais — o dashboard e os módulos são estáticos;
 - fluxos de negócio conectados (criar evento, vender, escanear, fechar contas);
 - logout, recuperação de senha e convites;
-- testes do app, E2E e CI.
+- fluxos E2E e monitoramento de produção.
 
 ## Stack
 
@@ -47,11 +47,10 @@ pnpm install
 pnpm dev
 ```
 
-O app precisa de duas variáveis públicas. Crie um `.env.local` na raiz:
+O app precisa de duas variáveis públicas. Comece pelo exemplo seguro:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+cp .env.example .env.local
 ```
 
 Chaves secretas ou `service_role` não devem aparecer no navegador nem no repositório.
@@ -69,13 +68,16 @@ Todo o `.env*` está no `.gitignore`.
 | `pnpm start` | serve o build |
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm check` | lint + typecheck + build |
+| `pnpm test` | testes unitários da aplicação com Vitest |
+| `pnpm check` | lint + typecheck + testes do app + build |
 | `pnpm supabase:push` | aplica `supabase/migrations` no projeto linkado |
 | `pnpm supabase:types` | regenera `src/lib/supabase/database.types.ts` |
 | `pnpm supabase:test` | executa os testes pgTAP locais de RLS e check-in |
 
 Rode `pnpm check` antes de concluir qualquer alteração. Para validar as políticas e o
-check-in, rode também `pnpm supabase:test`.
+check-in, rode também `pnpm supabase:test`. O CI executa os dois gates em cada push para
+`main` e em cada pull request; ele usa apenas a instância local do Supabase e nunca faz
+push para um projeto remoto.
 
 ## Supabase de desenvolvimento
 

@@ -1,0 +1,258 @@
+# Plan 001: Establish an application verification baseline
+
+> **Executor instructions**: Follow this plan step by step. Run every
+> verification command and confirm the expected result before moving to the next
+> step. If anything in the "STOP conditions" section occurs, stop and report —
+> do not improvise. When done, update the status row for this plan in
+> `plans/README.md`, unless a reviewer dispatched you and told you they maintain
+> the index.
+>
+> **Drift check (run first)**: `git diff --stat 9a45666..HEAD -- package.json pnpm-lock.yaml .gitignore README.md CLAUDE.md .env.example vitest.config.ts src/lib/supabase/config.test.ts .github/workflows/ci.yml`
+> If any in-scope file changed since this plan was written, compare the
+> "Current state" excerpts with the live files. A mismatch is a STOP condition.
+
+## Status
+
+- **Priority**: P1
+- **Effort**: L
+- **Risk**: MED
+- **Depends on**: none
+- **Category**: tests / dx
+- **Planned at**: commit `9a45666`, 2026-08-03
+- **Issue**: https://github.com/prof-ramos/webingressos-app/issues/5
+
+## Why this matters
+
+The repository contains a database pgTAP suite, but no application test runner,
+test script, CI workflow, or E2E coverage. The only application gate is
+`pnpm check`, which currently runs lint, typecheck, and build; those commands do
+not prove that authentication configuration or protected flows behave correctly.
+The next four plans change authorization and financial database boundaries, so
+they need a one-command local check and a non-optional CI check before they land.
+
+## Current state
+
+The repository is a private Next.js App Router application using pnpm 10,
+TypeScript, Supabase, and React. The relevant files are:
+
+- `package.json` — scripts at lines 5–14 include `lint`, `typecheck`, `check`,
+  and `supabase:test`, but no `test` script. The current `check` value is
+  `npm run lint && npm run typecheck && npm run build`.
+- `README.md:24-29` — explicitly says there are no app tests, E2E tests, or CI.
+- `ARCHITECTURE.md:205-209` — confirms there is no `.github/` workflow and no
+  monitoring configuration.
+- `supabase/tests/database/rls_and_check_in.sql` — the only test file; it is a
+  single pgTAP suite with 22 planned assertions covering selected RLS and
+  check-in cases.
+- `.gitignore:33-34` — ignores all `.env*`, so a safe committed example needs
+  an explicit negation rule.
+- `pnpm-workspace.yaml` — contains Supabase CLI build allow-list settings but no
+  package-manager version pin. `package.json` also has no `packageManager` field.
+
+The current application code has no reusable business-data service to test. A
+small pure test around `src/lib/supabase/config.ts` is therefore the correct
+initial application test; do not invent fake event or financial data merely to
+increase test count.
+
+The two load-bearing current excerpts are:
+
+```json
+// package.json:5-14
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "lint": "eslint",
+  "typecheck": "tsc --noEmit",
+  "check": "npm run lint && npm run typecheck && npm run build",
+  "supabase:test": "supabase test db --local"
+}
+```
+
+```gitignore
+# .gitignore:33-34
+.env*
+```
+
+Keep the existing script naming and TypeScript/ESLint conventions when adding
+the runner. Do not introduce a formatter or a second package manager.
+
+## Commands you will need
+
+| Purpose | Command | Expected on success |
+|---|---|---|
+| Install | `pnpm install --frozen-lockfile` | Exit 0; lockfile is accepted without resolution changes |
+| App tests | `pnpm test` | Vitest exits 0 and runs the new config tests |
+| Lint | `pnpm lint` | Exit 0 |
+| Typecheck | `pnpm typecheck` | Exit 0 with no TypeScript errors |
+| Full app gate | `pnpm check` | Exit 0; lint, typecheck, tests, and production build all run |
+| Database tests | `pnpm exec supabase start` then `pnpm supabase:test` | Local Supabase starts and pgTAP finishes with all planned assertions passing |
+| Database cleanup | `pnpm exec supabase stop` | Local disposable stack stops; no remote project is contacted |
+| Diff hygiene | `git diff --check` | No whitespace errors |
+
+The repository currently has no `node_modules`, `pnpm`, or Supabase CLI in the
+advisor environment. That is an environment limitation, not a reason to remove
+these gates. The executor must use the repository's declared pnpm 10 toolchain.
+
+## Scope
+
+**In scope** — only these files may be modified:
+
+- `package.json`
+- `pnpm-lock.yaml` (only the lockfile changes required by the chosen test runner)
+- `vitest.config.ts` (create)
+- `src/lib/supabase/config.test.ts` (create)
+- `.env.example` (create)
+- `.gitignore`
+- `.github/workflows/ci.yml` (create)
+- `README.md`
+- `CLAUDE.md`
+- `plans/README.md` (status row only)
+
+**Out of scope**:
+
+- Any existing Supabase migration or `supabase/tests/database/rls_and_check_in.sql`;
+  database behavior is addressed by later plans.
+- Any visual component, route behavior, or business-domain type.
+- `src/lib/supabase/database.types.ts`; it is generated and should only be
+  regenerated by a later schema plan when required.
+- Remote Supabase state, linked projects, secrets, or deployment configuration.
+
+## Git workflow
+
+No branch naming or commit convention is visible in the two-commit history. Use a
+topic branch such as `advisor/001-verification-baseline`; do not push or open a
+PR unless the operator explicitly asks. Do not run `supabase db push --linked`.
+
+## Steps
+
+### Step 1: Pin the documented toolchain and add a safe environment example
+
+Determine the installed pnpm 10 patch version in the executor environment with
+`pnpm --version`, then add the exact value as the `packageManager` field in
+`package.json`. Do not guess a version or upgrade dependencies as part of this
+step. Create `.env.example` containing only these two placeholder names, with
+non-secret placeholder values:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=replace-with-local-publishable-key
+```
+
+Add `!.env.example` after the existing `.env*` ignore rule so the example is
+committable. Update `README.md` to copy `.env.example` to `.env.local`, and
+remove the contradictory manual-only setup wording. Do not put a database
+password, service-role key, or any real credential in the example.
+
+**Verify**: `pnpm install --frozen-lockfile` → exit 0, and `git diff --check` → no output.
+
+### Step 2: Add a minimal application test runner and a meaningful first test
+
+Add Vitest as a dev dependency using the pinned pnpm toolchain, then create
+`vitest.config.ts` for TypeScript modules under `src/` with a Node test
+environment. Do not add a browser or React testing environment until a component
+has behavior worth testing. Add `src/lib/supabase/config.test.ts` covering:
+
+1. both public variables missing returns `null` from `getSupabaseConfig()`;
+2. only one variable present still returns `null`;
+3. both variables present return exactly the two public values;
+4. `requireSupabaseConfig()` throws the documented Portuguese configuration
+   error when configuration is absent;
+5. `requireSupabaseConfig()` returns the same values when configured.
+
+Use Vitest environment helpers to restore `process.env` after each test. Test
+only placeholder values created inside the test; never read or print a real
+`.env.local`. Add `test: vitest run` and, if useful for local development,
+`test:watch: vitest`; keep the existing `supabase:test` script separate.
+
+**Verify**: `pnpm test` → all new tests pass; `pnpm typecheck` → exit 0.
+
+### Step 3: Make `pnpm check` the complete application gate
+
+Update the `check` script so it runs lint, typecheck, application tests, and
+build in that order. Preserve the existing script names and avoid introducing a
+second formatter or test framework. The expected command remains `pnpm check`.
+
+**Verify**: `pnpm check` → lint, typecheck, Vitest, and `next build` all run and exit 0.
+
+### Step 4: Add CI for the application and disposable database suite
+
+Create `.github/workflows/ci.yml` for pushes and pull requests. Use the pinned
+pnpm version from `package.json`, cache the pnpm store through the official
+`actions/setup-node` mechanism, and run:
+
+1. `pnpm install --frozen-lockfile`;
+2. `pnpm check`;
+3. a separate database job that starts the local Supabase stack, runs
+   `pnpm supabase:test`, and stops the stack in an `always()` cleanup step.
+
+The application job may set the two public environment variables to the same
+non-secret dummy values used in `.env.example` if Next's build requires them.
+Never add a linked Supabase project ref, database password, access token, or
+service-role key to workflow YAML. The database job must run only against the
+local stack and must not invoke `supabase db push --linked`.
+
+**Verify**: inspect the workflow and run `git diff --check` → no whitespace errors;
+on CI, both jobs complete successfully and the database job reports all pgTAP
+assertions passing.
+
+### Step 5: Align onboarding and maintenance documentation
+
+Update `README.md` and the relevant `CLAUDE.md` sections to state that:
+
+- `pnpm check` includes app tests;
+- `pnpm test` is the application test command;
+- `pnpm supabase:test` remains the local database/RLS command;
+- `.env.example` is the safe starting point;
+- CI is the required merge gate;
+- no remote database push belongs in CI.
+
+Do not claim that business flows, E2E coverage, production deployment, or
+monitoring now exist; those remain future work.
+
+**Verify**: `rg -n "no tests|sem testes|sem CI|\.env\.example|pnpm test|pnpm check" README.md CLAUDE.md` → statements are consistent and no stale claim says the baseline is absent.
+
+## Test plan
+
+- `src/lib/supabase/config.test.ts`: configuration absent, partially present,
+  present, throwing, and successful paths listed in Step 2.
+- `supabase/tests/database/rls_and_check_in.sql`: do not change in this plan;
+  execute it unchanged through the local Supabase job to establish the existing
+  database baseline.
+- The CI workflow must exercise the same commands documented for local use.
+
+## Done criteria
+
+- [ ] `package.json` has a concrete pnpm 10 `packageManager` value.
+- [ ] `.env.example` exists, contains only the two public placeholders, and is
+      not accidentally ignored.
+- [ ] `pnpm test` exits 0 and runs the new configuration tests.
+- [ ] `pnpm check` exits 0 and includes tests.
+- [ ] `pnpm supabase:test` exits 0 against a disposable local stack.
+- [ ] CI runs `pnpm install --frozen-lockfile`, `pnpm check`, and local pgTAP.
+- [ ] `git diff --check` exits 0.
+- [ ] No files outside the in-scope list are modified; `plans/README.md` only has
+      this plan's status update.
+- [ ] `plans/README.md` status row is updated to `DONE`.
+
+## STOP conditions
+
+Stop and report instead of improvising if:
+
+- pnpm is not available after following the repository's documented toolchain
+  setup, or the available version is not pnpm 10;
+- adding the test runner would require editing an existing migration or changing
+  production behavior;
+- `pnpm install --frozen-lockfile` wants to rewrite unrelated dependency ranges;
+- the Supabase CLI requires a remote credential or linked project to run the local
+  test suite;
+- CI cannot run local Supabase without adding a secret or remote database step;
+- any real credential is discovered while creating `.env.example` or CI.
+
+## Maintenance notes
+
+Keep the app and database test commands separate: application tests should remain
+fast and deterministic, while pgTAP owns RLS and transaction behavior. Every
+future security migration should add negative assertions to the pgTAP suite and
+must pass through CI before a remote migration is considered. Reviewers should
+check that CI never gains a `db push --linked` step and that `.env.example` stays
+free of secrets.
