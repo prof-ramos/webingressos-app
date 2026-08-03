@@ -1,6 +1,6 @@
 begin;
 
-select plan(57);
+select plan(69);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
@@ -80,12 +80,24 @@ select '30000000-0000-0000-0000-000000000002', id, 'Lote B', 3000
 from public.events
 where public_id = '20000000-0000-0000-0000-000000000002';
 
-insert into public.orders (public_id, event_id, status, total_cents, created_by)
+insert into public.orders (
+  public_id,
+  event_id,
+  status,
+  total_cents,
+  buyer_name,
+  buyer_email,
+  buyer_phone,
+  created_by
+)
 select
   '40000000-0000-0000-0000-000000000001',
   id,
   'confirmed',
   2500,
+  'Cliente de teste A',
+  'buyer-a@example.test',
+  'phone-a-fixture',
   '00000000-0000-0000-0000-000000000001'
 from public.events
 where public_id = '20000000-0000-0000-0000-000000000001';
@@ -195,6 +207,38 @@ select is(
 );
 
 select is(
+  (select count(*)::int
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  1,
+  'owner consegue consultar o pedido pela visão operacional'
+);
+
+select is(
+  (select concat(status::text, ':', total_cents::text, ':', currency)
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  'confirmed:2500:BRL',
+  'visão operacional retorna apenas os campos comerciais necessários'
+);
+
+select results_eq(
+  $$
+    select order_public_id, buyer_name, buyer_email, buyer_phone
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001')
+  $$,
+  $$
+    values (
+      '40000000-0000-0000-0000-000000000001'::uuid,
+      'Cliente de teste A'::text,
+      'buyer-a@example.test'::text,
+      'phone-a-fixture'::text
+    )
+  $$,
+  'owner consegue consultar detalhes do cliente pela função privilegiada'
+);
+
+select is(
   (select status from public.check_in_ticket(
     'ticket-a-001',
     '20000000-0000-0000-0000-000000000001',
@@ -279,6 +323,24 @@ select is(
   'membro de outra organização vê somente o próprio evento'
 );
 
+select is(
+  (select count(*)::int
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  0,
+  'organização B não vê pedido do evento A na visão operacional'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001');
+  $$,
+  '42501',
+  'Not authorized to access order',
+  'organização B não consulta detalhes do pedido A'
+);
+
 select set_config(
   'test.order_b_item_id',
   (select item.id::text
@@ -348,18 +410,21 @@ select throws_ok(
   'ingresso não pode apontar para item de outro evento'
 );
 
-select is(
-  (select actor_user_id::text from public.record_audit_log(
-    (select organization_id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
-    (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
-    'ticket',
-    '50000000-0000-0000-0000-000000000001',
-    'checked_in',
-    null,
-    '{}'::jsonb
-  )),
-  '00000000-0000-0000-0000-000000000001',
-  'auditoria preenche o ator a partir da sessão'
+select throws_ok(
+  $$
+    select public.record_audit_log(
+      (select organization_id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      'ticket',
+      '50000000-0000-0000-0000-000000000001',
+      'checked_in',
+      null,
+      '{}'::jsonb
+    );
+  $$,
+  '42501',
+  'permission denied for function record_audit_log',
+  'owner não executa o RPC genérico de auditoria'
 );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', true);
@@ -367,6 +432,33 @@ select set_config(
   'request.jwt.claims',
   '{"sub":"00000000-0000-0000-0000-000000000003","role":"authenticated"}',
   true
+);
+
+select is(
+  (select count(*)::int
+   from public.orders_operational
+   where public_id = '40000000-0000-0000-0000-000000000001'),
+  1,
+  'gate consulta pedidos do evento sem dados de cliente'
+);
+
+select throws_ok(
+  $$
+    select * from public.orders;
+  $$,
+  '42501',
+  'permission denied for table orders',
+  'gate não consulta a tabela bruta de pedidos'
+);
+
+select throws_ok(
+  $$
+    select *
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001');
+  $$,
+  '42501',
+  'Not authorized to access order',
+  'gate não consulta dados pessoais do comprador'
 );
 
 select throws_ok(
@@ -383,6 +475,29 @@ select throws_ok(
   '42501',
   'permission denied for table audit_logs',
   'cliente não escreve auditoria diretamente'
+);
+
+select throws_ok(
+  $$
+    select public.record_audit_log(
+      (select organization_id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      'ticket',
+      '50000000-0000-0000-0000-000000000001',
+      'forged',
+      null,
+      '{}'::jsonb
+    );
+  $$,
+  '42501',
+  'permission denied for function record_audit_log',
+  'gate não executa o RPC genérico de auditoria'
+);
+
+select is(
+  (select count(*)::int from public.audit_logs),
+  0,
+  'tentativas negadas não criam entradas de auditoria'
 );
 
 select is(
@@ -804,6 +919,39 @@ select throws_ok(
   '42501',
   'Not authorized to transition event',
   'colaborador não transiciona eventos'
+);
+
+select is(
+  (select count(*)::int
+   from information_schema.columns
+   where table_schema = 'public'
+     and table_name = 'orders_operational'
+     and column_name in ('buyer_name', 'buyer_email', 'buyer_phone')),
+  0,
+  'visão operacional não possui colunas de dados pessoais'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-0000-0000-000000000004","role":"authenticated"}',
+  true
+);
+
+select results_eq(
+  $$
+    select order_public_id, buyer_name, buyer_email, buyer_phone
+    from public.get_order_customer('40000000-0000-0000-0000-000000000001')
+  $$,
+  $$
+    values (
+      '40000000-0000-0000-0000-000000000001'::uuid,
+      'Cliente de teste A'::text,
+      'buyer-a@example.test'::text,
+      'phone-a-fixture'::text
+    )
+  $$,
+  'finance consulta detalhes do cliente pela função privilegiada'
 );
 
 reset role;
