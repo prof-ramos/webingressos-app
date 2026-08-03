@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="WebIngressos">
+  <rect width="32" height="32" rx="9" fill="#0e6340" />
+  <path
+    d="M6.6 10h3.42l2.06 8.14L14.4 10h3.2l2.32 8.14L21.98 10h3.42l-3.7 12h-3.62l-2.08-7.4-2.08 7.4H10.3z"
+    fill="#ffffff"
+  />
+</svg>

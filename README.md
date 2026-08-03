@@ -107,7 +107,7 @@ Os requisitos e critérios de aceite da fundação estão na
 ## Organização do código
 
 ```text
-proxy.ts                 # proxy do Next 16: refresh de sessão e proteção de rotas
+src/proxy.ts             # proxy do Next 16: refresh de sessão e proteção de rotas
 src/
 ├── app/                 # rotas App Router
 │   ├── (auth)/login/    # login, fora do shell

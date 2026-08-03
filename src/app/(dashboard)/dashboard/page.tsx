@@ -11,53 +11,53 @@ import { MetricCard } from "@/components/dashboard/metric-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
+
+export const metadata = {
+  title: "Visão geral",
+}
 
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-3">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>Visão geral</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-extrabold tracking-[-0.05em] text-ink-900 sm:text-4xl">
-                Visão geral
-              </h1>
-              <Badge variant="secondary" className="rounded-md bg-brand-100 text-brand-800">
-                Estrutura inicial
-              </Badge>
-            </div>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-600 sm:text-base">
-              Um ponto de partida para organizar eventos, acompanhar ingressos e operar a entrada.
-            </p>
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-extrabold tracking-[-0.05em] text-ink-900 sm:text-4xl">
+              Visão geral
+            </h1>
+            <Badge variant="secondary" className="rounded-md bg-brand-100 text-brand-800">
+              Estrutura inicial
+            </Badge>
           </div>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-600 sm:text-base">
+            Um ponto de partida para organizar eventos, acompanhar ingressos e operar a entrada.
+          </p>
         </div>
-        <Button disabled size="lg" className="h-12 gap-2 rounded-lg px-5">
-          <Plus className="size-4" aria-hidden="true" />
-          Criar evento
-        </Button>
+        <div className="shrink-0 sm:text-right">
+          <Button
+            disabled
+            size="lg"
+            aria-describedby="criar-evento-motivo"
+            className="h-12 w-full gap-2 rounded-lg px-5 font-bold sm:w-auto"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            Criar evento
+          </Button>
+          {/* A disabled primary action has to say why it is disabled. */}
+          <p id="criar-evento-motivo" className="mt-2 text-xs text-ink-500">
+            Disponível quando o cadastro de eventos for conectado.
+          </p>
+        </div>
       </div>
 
       <section aria-labelledby="summary-heading" className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <h2 id="summary-heading" className="text-lg font-extrabold tracking-[-0.03em] text-ink-900">
             Resumo da operação
           </h2>
           <span className="text-xs font-semibold text-ink-500">Dados aparecerão após a conexão</span>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
           <MetricCard label="Eventos ativos" icon={CalendarDays} detail="Nenhum evento carregado" />
           <MetricCard label="Ingressos vendidos" icon={Ticket} detail="Nenhum pedido carregado" />
           <MetricCard label="Check-ins hoje" icon={ClipboardCheck} detail="A operação ainda não começou" />
@@ -65,16 +65,19 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(18rem,0.75fr)]">
-        <Card className="rounded-[1.25rem] border-border shadow-[0_2px_12px_rgba(27,39,64,0.03)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(18rem,0.75fr)]">
+        <Card className="rounded-card shadow-card">
           <CardHeader className="flex flex-row items-start justify-between gap-4 p-6 pb-2">
             <div>
-              <CardTitle className="text-lg font-extrabold tracking-[-0.03em] text-ink-900">
+              <CardTitle
+                as="h2"
+                className="text-lg font-extrabold tracking-[-0.03em] text-ink-900"
+              >
                 Próxima fatia de operação
               </CardTitle>
               <p className="mt-1 text-sm text-ink-600">O fluxo será construído nesta ordem.</p>
             </div>
-            <ArrowUpRight className="size-5 text-brand-700" aria-hidden="true" />
+            <ArrowUpRight className="size-5 shrink-0 text-brand-700" aria-hidden="true" />
           </CardHeader>
           <CardContent className="p-6 pt-4">
             <ol className="divide-y divide-border">
@@ -98,9 +101,12 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.25rem] border-border bg-brand-50 shadow-none">
+        <Card className="rounded-card bg-brand-50 shadow-none">
           <CardHeader className="p-6 pb-2">
-            <CardTitle className="text-lg font-extrabold tracking-[-0.03em] text-brand-900">
+            <CardTitle
+              as="h2"
+              className="text-lg font-extrabold tracking-[-0.03em] text-brand-900"
+            >
               Operação segura por padrão
             </CardTitle>
           </CardHeader>
@@ -108,20 +114,18 @@ export default function DashboardPage() {
             <p className="text-sm leading-6 text-brand-800">
               Cada ação relevante deve respeitar a organização, registrar seu ator e deixar um caminho de auditoria.
             </p>
-            <div className="space-y-3 text-sm text-brand-800">
-              <div className="flex gap-3">
-                <span className="mt-1 size-2 shrink-0 rounded-full bg-brand-500" />
-                <span>RLS em todos os dados de negócio</span>
-              </div>
-              <div className="flex gap-3">
-                <span className="mt-1 size-2 shrink-0 rounded-full bg-brand-500" />
-                <span>Check-in sem duplicidade</span>
-              </div>
-              <div className="flex gap-3">
-                <span className="mt-1 size-2 shrink-0 rounded-full bg-brand-500" />
-                <span>Financeiro imutável e rastreável</span>
-              </div>
-            </div>
+            <ul className="space-y-3 text-sm text-brand-800">
+              {[
+                "RLS em todos os dados de negócio",
+                "Check-in sem duplicidade",
+                "Financeiro imutável e rastreável",
+              ].map((item) => (
+                <li key={item} className="flex gap-3">
+                  <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       </div>

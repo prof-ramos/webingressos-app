@@ -68,7 +68,7 @@ use `getSupabaseConfig()` (tolerante à ausência) ou `requireSupabaseConfig()` 
 ## Estrutura
 
 ```text
-proxy.ts                      # entrada do proxy do Next 16 (equivalente ao antigo middleware)
+src/proxy.ts                  # entrada do proxy do Next 16 (equivalente ao antigo middleware)
 src/
 ├── app/
 │   ├── layout.tsx            # html lang="pt-BR" + QueryProvider
@@ -106,7 +106,8 @@ Alias de import: `@/*` → `./src/*`.
 
 O fluxo inteiro passa por três arquivos:
 
-1. `proxy.ts` — o Next 16 chama `proxy()` para todas as rotas exceto assets estáticos.
+1. `src/proxy.ts` — o Next 16 chama `proxy()` para todas as rotas exceto assets estáticos.
+   O arquivo precisa ficar ao lado de `app/`; na raiz do repositório o Next o ignora em silêncio.
    Ele apenas delega para `updateSession`.
 2. `src/lib/supabase/proxy.ts` — cria um `createServerClient` ligado aos cookies do
    request, chama `auth.getClaims()` e redireciona para `/login?next=<path>` quando não
@@ -250,10 +251,14 @@ Não presuma que estas coisas existem:
 - **`database.types.ts` é gerado mas não está ligado aos clientes** — nenhum
   `createClient` usa o genérico `Database`. Ligar isso é uma melhoria pendente.
 - **Nenhuma tela lê dados de negócio reais.** Dashboard, módulos e o seletor de organização
-  do `AppShell` são estáticos; o e-mail exibido no header vem da sessão autenticada.
-- **`LoginForm` não usa `next`** da query string: sempre redireciona para `/dashboard`.
-- **Logout, recuperação de senha e convites** ainda não estão implementados.
+  do `AppShell` são estáticos; o e-mail exibido no header vem da sessão autenticada, lido no
+  `layout.tsx` do grupo `(dashboard)`.
+- **Recuperação de senha e convites** ainda não estão implementados. Logout existe em
+  `POST /auth/sign-out`; `Perfil` e `Preferências` no menu da conta seguem desabilitados.
 - Não inventar dados, clientes, resultados ou disponibilidade em nenhuma tela.
+
+Auditoria de interface, o que já foi corrigido e o que continua aberto:
+[`docs/ux-ui-auditoria.md`](./docs/ux-ui-auditoria.md).
 
 ## Onde procurar decisões
 
