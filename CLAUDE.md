@@ -238,6 +238,60 @@ pnpm dlx shadcn@latest add <componente>
 projeto. O componente cai em `src/components/ui/`. Revise o resultado para que ele use
 os tokens do projeto antes de commitar.
 
+## Armadilhas conhecidas
+
+Cada item abaixo foi um defeito real neste repositório, encontrado só por inspeção do build
+ou do DOM. Nenhum deles falha `pnpm check`.
+
+### Falhas silenciosas de configuração
+
+- **`src/proxy.ts` tem de ficar ao lado de `app/`.** Na raiz do repositório o Next 16 o ignora
+  sem erro: `middleware-manifest.json` fica vazio e **nenhuma rota é protegida**. Confira que o
+  build lista `ƒ Proxy (Middleware)` e que `GET /dashboard` sem sessão responde 307.
+- **CSS fora de `@layer` vence todas as camadas do Tailwind.** Um `* { border-color }` solto em
+  `globals.css` anulava `focus-visible:border-ring`, `aria-invalid:border-destructive` e
+  `border-transparent`. Regras base vão em `@layer base`, sempre.
+- **Fonte declarada não é fonte carregada.** `--font-sans` apontava para Plus Jakarta Sans sem
+  ninguém baixá-la. Ao mexer em tipografia, confirme `document.fonts` no navegador.
+
+### Base UI (não é Radix — a API difere)
+
+- **`Select` mostra o *valor*, não o rótulo.** Sem a prop `items` no `Select.Root`, o gatilho
+  exibe o slug cru.
+- **`Menu.GroupLabel` exige `Menu.Group` em volta.** Solto, lança `MenuGroupContext is missing`
+  em tempo de execução e o menu abre vazio.
+- **`render` com elemento nativo precisa de `nativeButton`.** Sem essa prop o `MenuItem`
+  intercepta `Enter`/`Espaço` e o botão nativo nunca ativa — controle só funciona com o mouse.
+
+### Auth e redirecionamento
+
+- **Identidade no servidor vem de `getClaims()`.** `getUser()` custa uma requisição ao serviço
+  de Auth em cada render; o e-mail está em `JwtPayload.email`.
+- **Validar `?next=` por prefixo de string não basta.** `searchParams.get` decodifica, então
+  `%2F%5Cevil.example` chega como `/\evil.example` — passa em `startsWith("/")` e o parser de URL
+  normaliza para outro host. Compare a origem já parseada, como `auth/callback` faz.
+- **O código de erro do Supabase é `invalid_credentials`.** Filtre por `error.code`, nunca por
+  `error.message`.
+- **Logout que falha não pode redirecionar como sucesso** — a sessão pode continuar válida.
+
+### Interface
+
+- **As variantes de `Button`/`Input`/`SelectTrigger` já carregam a escala de `DESIGN.md`**
+  (44 compacto / 48 campo / 56 primário). Use `size="lg"` para a ação primária da tela em vez de
+  corrigir altura, padding ou peso com `className`.
+
+### Como verificar
+
+- **Abra o que é interativo.** Medir controles em estado fechado esconde defeitos: dois bugs
+  (menu da conta vazio, logout sem teclado) sobreviveram a uma rodada inteira de verificação
+  porque o dropdown nunca foi aberto. Acione por **mouse e por teclado**, e observe `pageerror`.
+- **Leia estilo computado depois da transição.** Com `transition-colors`, medir logo após o
+  `Tab` devolve a cor de origem e simula um defeito que não existe.
+- **Para auditar telas autenticadas sem sessão**, uma rota temporária sob `/auth/*` (público no
+  proxy) renderiza `AppShell` + a página. Remova antes de commitar.
+- **`tsc` falha com `.next/types` obsoleto** depois de apagar uma rota; rode o build antes de
+  concluir que o erro é do código.
+
 ## Lacunas conhecidas
 
 Não presuma que estas coisas existem:
