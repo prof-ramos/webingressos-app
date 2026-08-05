@@ -4,7 +4,7 @@ create or replace function public.guard_event_complete_ticket_issuance()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   has_incomplete_issuance boolean;
@@ -49,7 +49,7 @@ create or replace function public.guard_order_status_after_settlement()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   event_status public.event_status;

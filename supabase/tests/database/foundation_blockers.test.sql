@@ -46,10 +46,14 @@ join public.events event_record on event_record.id = order_record.event_id
 join public.lots lot on lot.event_id = event_record.id
 where event_record.name = 'Emissão incompleta';
 
-select public.transition_order_status(order_record.id, 'confirmed', null)
-from public.orders order_record
-join public.events event_record on event_record.id = order_record.event_id
-where event_record.name = 'Emissão incompleta';
+update public.orders
+set status = 'confirmed'
+where id in (
+  select order_record.id
+  from public.orders order_record
+  join public.events event_record on event_record.id = order_record.event_id
+  where event_record.name = 'Emissão incompleta'
+);
 
 insert into public.tickets (order_item_id, event_id)
 select item.id, event_record.id
@@ -60,8 +64,8 @@ where event_record.name = 'Emissão incompleta';
 
 select extensions.throws_ok(
   format(
-    'select public.transition_event_status(%s, ''encerrado'', null)',
-    event_record.id
+    'select * from public.transition_event(''%s''::uuid, ''encerrado'', null)',
+    event_record.public_id
   ),
   '23514',
   'Confirmed orders require complete ticket issuance',
@@ -79,8 +83,8 @@ where event_record.name = 'Emissão incompleta';
 
 select extensions.lives_ok(
   format(
-    'select public.transition_event_status(%s, ''encerrado'', null)',
-    event_record.id
+    'select * from public.transition_event(''%s''::uuid, ''encerrado'', null)',
+    event_record.public_id
   ),
   'evento encerra após a emissão completa'
 )
@@ -99,7 +103,7 @@ where name = 'Prestação fechada';
 
 select extensions.throws_ok(
   format(
-    'select public.transition_order_status(%s, ''cancelled'', ''teste'')',
+    'update public.orders set status = ''cancelled'' where id = %s',
     order_record.id
   ),
   '23514',
@@ -122,7 +126,7 @@ where name = 'Prestação aberta';
 
 select extensions.lives_ok(
   format(
-    'select public.transition_order_status(%s, ''cancelled'', ''teste'')',
+    'update public.orders set status = ''cancelled'' where id = %s',
     order_record.id
   ),
   'pedido ainda pode ser cancelado antes da prestação de contas fechar'

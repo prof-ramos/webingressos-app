@@ -2,7 +2,7 @@
 
 - **Status:** baseline de desenvolvimento aceita
 - **Data:** 2026-08-05
-- **Entrega-alvo:** branch `agent/webingressos-app-foundation`, comparada a `main`, incluindo o fechamento TDD preparado no working tree
+- **Entrega-alvo:** `main`, após a integração da fundação no estado mais recente do repositório
 - **Público:** engenharia, revisão de código, produto e segurança
 
 ## 1. Objetivo
@@ -67,8 +67,8 @@ Nesta matriz, `owner` significa exclusivamente um membro `owner` da organizaçã
 
 ### 3.4. Ciclos de vida e integridade comercial
 
-- **LIFE-01 — Evento.** As transições permitidas são `rascunho → planejado|cancelado`, `planejado → vendas_abertas|cancelado`, `vendas_abertas → encerrado|cancelado` e `encerrado → prestacao_contas_fechada`. `cancelado` e `prestacao_contas_fechada` são terminais; cancelamento exige motivo. Transições devem ocorrer por `transition_event_status`, com histórico e auditoria. Sair de `vendas_abertas` deve ser rejeitado enquanto algum item de pedido `confirmed` tiver menos ingressos emitidos que sua quantidade.
-- **LIFE-02 — Pedido.** Um pedido nasce `pending`. As transições permitidas são `pending → confirmed|cancelled` e `confirmed → cancelled|refunded`; cancelamento e estorno exigem motivo. `cancelled` e `refunded` são terminais. Cancelar ou estornar um pedido confirmado mantém os ingressos emitidos para auditoria, mas os torna inelegíveis para check-in porque o pedido deixa de estar `confirmed`. Essas transições permanecem permitidas com evento `encerrado` ou `cancelado`, mas são bloqueadas após `prestacao_contas_fechada`. Mudanças devem ocorrer por `transition_order_status`.
+- **LIFE-01 — Evento.** As transições permitidas são `rascunho → planejado|cancelado`, `planejado → vendas_abertas|cancelado`, `vendas_abertas → encerrado|cancelado` e `encerrado → prestacao_contas_fechada|cancelado`. `cancelado` e `prestacao_contas_fechada` são terminais; cancelamento e fechamento exigem motivo. Transições devem ocorrer por `transition_event`, que grava o histórico de status. Sair de `vendas_abertas` deve ser rejeitado enquanto algum item de pedido `confirmed` tiver menos ingressos emitidos que sua quantidade.
+- **LIFE-02 — Pedido.** Um pedido nasce `pending`. O domínio reconhece `pending`, `confirmed`, `cancelled` e `refunded`; a confirmação, o cancelamento e o estorno devem ser implementados por operações server-side confiáveis antes da entrada em produção. Cancelar ou estornar um pedido confirmado mantém os ingressos emitidos para auditoria, mas os torna inelegíveis para check-in porque o pedido deixa de estar `confirmed`. Nesta fundação, qualquer mudança de status é bloqueada depois de `prestacao_contas_fechada`; o contrato completo de transição de pedido permanece trabalho posterior.
 - **LIFE-03 — Confirmação do pedido.** Confirmar exige evento em `vendas_abertas`, soma dos itens igual ao total, lotes dentro da janela de venda e capacidade suficiente em número de ingressos por lote. Não existe capacidade global do evento nesta entrega. Pedidos `pending` não reservam capacidade. Para cada lote, o consumo existente soma `quantity` de itens em outros pedidos `confirmed`; o pedido-alvo é excluído dessa soma e sua própria quantidade é adicionada exatamente uma vez. Pedidos `cancelled` ou `refunded` deixam de consumir capacidade. As linhas de evento, lote e pedido relevantes devem ser bloqueadas durante a validação para evitar corrida.
 - **LIFE-04 — Itens e lotes.** Itens só podem ser escritos enquanto o pedido estiver `pending`. O evento de um lote é imutável e itens não podem cruzar eventos.
 - **LIFE-05 — Ingressos.** A emissão é uma operação posterior e separada da confirmação do pedido, mas precisa ser concluída antes de o evento sair de `vendas_abertas`, conforme LIFE-01. Cada ingresso exige pedido `confirmed`, evento em `vendas_abertas` e vínculo consistente entre evento, pedido, item e lote. A quantidade emitida não pode superar a quantidade do item e o código público deve ser opaco e gerado pelo banco. Cancelamento ou estorno posterior não apaga ingressos; apenas os invalida operacionalmente. Isso não reabre nem invalida retroativamente uma transição de evento já concluída.
@@ -79,8 +79,8 @@ Nesta matriz, `owner` significa exclusivamente um membro `owner` da organizaçã
 - **OPS-01 — Autorização do check-in.** Somente `owner`, `ops` e `gate` com acesso ao evento podem validar um ingresso.
 - **OPS-02 — Elegibilidade.** Check-in exige evento em `vendas_abertas`, pedido `confirmed` e ingresso pertencente ao evento informado. O estado atual não aceita novas entradas depois que o evento avança para `encerrado`.
 - **OPS-03 — Idempotência.** A primeira validação cria o check-in; repetições retornam `already_checked_in` e não criam uma segunda entrada. A unicidade por ingresso deve existir também no banco.
-- **OPS-04 — Resultado estável.** `check_in_ticket` deve distinguir `accepted`, `already_checked_in` e `invalid`. O RPC atual produz exatamente `not_found`, `wrong_event`, `event_not_open` e `order_not_confirmed` como motivos de `invalid`; `cancelled` permanece reservado no tipo de domínio e não é produzido pelo schema atual.
-- **FIN-01 — Lançamento financeiro.** Um lançamento nasce `previsto` e só pode avançar `previsto → aprovado → pago` por `transition_ledger_entry_status`, sob papel `owner` ou `finance`.
+- **OPS-04 — Resultado estável.** `check_in_ticket` deve distinguir `accepted`, `already_checked_in` e `invalid`. O RPC atual produz `not_found`, `wrong_event`, `not_authorized`, `cancelled` e `not_confirmed` como motivos de `invalid`.
+- **FIN-01 — Lançamento financeiro.** Um lançamento nasce `previsto` e só pode avançar `previsto → aprovado → pago` pelas operações `approve_ledger_entry` e `pay_ledger_entry`, sob papel `owner` ou `finance`.
 - **FIN-02 — Fechamento.** Depois de `prestacao_contas_fechada`, nenhum lançamento do evento pode ser inserido ou alterado.
 - **FIN-03 — Correções.** Vendas e movimentos financeiros não são apagados para correção; devem usar novos registros ou transições auditáveis.
 
@@ -108,7 +108,7 @@ Nesta matriz, `owner` significa exclusivamente um membro `owner` da organizaçã
 - Rotas públicas: `/login` e `/auth/*`.
 - Destino autenticado padrão: `/dashboard`.
 - Callback PKCE: `GET /auth/callback?code=<code>&next=<caminho-local>`; falhas usam `error=auth_callback_failed` e configuração ausente usa `error=supabase_not_configured`.
-- RPCs de lifecycle: `transition_event_status`, `transition_order_status`, `transition_ledger_entry_status` e `check_in_ticket`.
+- RPCs/operações server-side: `transition_event`, `approve_ledger_entry`, `pay_ledger_entry` e `check_in_ticket`. A fundação ainda não expõe um RPC de transição de pedido.
 - Estados de evento: `rascunho`, `planejado`, `vendas_abertas`, `encerrado`, `prestacao_contas_fechada`, `cancelado`.
 - Estados de pedido: `pending`, `confirmed`, `cancelled`, `refunded`.
 - Estados financeiros: `previsto`, `aprovado`, `pago`.
@@ -140,7 +140,7 @@ Os estados abaixo descrevem a evidência disponível em 2026-08-05:
 | Arquitetura | ARCH-01–05 | ADRs, `src/modules`, App Router, tipos de domínio e ausência de provider global sem consumidor | Implementado |
 | Autenticação | AUTH-01–08 | `src/proxy.ts`, Supabase SSR, navegação segura, login e menu da conta; testes HTTP dos redirects e Playwright do erro inicial | Prova parcial — falta E2E com uma sessão Supabase real |
 | Tenant e RLS | SEC-01–06 | migrations de schema, políticas, funções confiáveis e revogação de escritas diretas | Prova parcial — falta suíte PostgreSQL automatizada |
-| Ciclos comerciais | LIFE-01–06 | RPCs, triggers e constraints nas migrations; `20260805120000_foundation_blockers.sql` aplicada no desenvolvimento e quatro provas pgTAP vinculadas | Prova parcial — faltam cenários PostgreSQL concorrentes mais amplos |
+| Ciclos comerciais | LIFE-01–06 | `transition_event`, triggers e constraints nas migrations; `20260805120000_foundation_blockers.sql` e quatro provas pgTAP vinculadas | Prova parcial — falta operação confiável para o lifecycle completo de pedidos e faltam cenários PostgreSQL concorrentes mais amplos |
 | Check-in e finanças | OPS-01–04, FIN-01–03 | `check_in_ticket`, unicidade por ingresso, lifecycle financeiro e guards de fechamento | Prova parcial — falta teste de integração concorrente |
 | Interface | UI-01–06 | shell responsivo, fonte canônica de destinos, paridade desktop/mobile protegida por teste, ilhas cliente e Playwright/axe do login | Prova parcial — falta evidência visual autenticada no viewport móvel; rotas operacionais permanecem fora de escopo |
 | Qualidade | QUAL-01–06 | `pnpm check`, testes HTTP, bundle, Playwright e pgTAP vinculados; tipos Supabase versionados | Prova parcial — QUAL-05 ainda exige cobertura de RLS e concorrência antes de produção |
