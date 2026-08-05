@@ -8,7 +8,19 @@ import { NavigationLinks } from "@/components/layout/navigation-links"
 import { WorkspaceSelector } from "@/components/layout/workspace-selector"
 import { Separator } from "@/components/ui/separator"
 
-export function AppShell({ children }: { children: ReactNode }) {
+export type AccountSummary = {
+  displayName: string
+  initials: string
+  roleLabel: string
+}
+
+export function AppShell({
+  children,
+  account,
+}: {
+  children: ReactNode
+  account: AccountSummary
+}) {
   return (
     <div className="min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card lg:flex">
@@ -40,7 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="font-semibold text-ink-800">Campus Ledger</span>
           </div>
 
-          <AccountMenu />
+          <AccountMenu {...account} />
         </header>
 
         <main className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">

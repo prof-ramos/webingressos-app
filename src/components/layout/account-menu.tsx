@@ -16,7 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { createClient } from "@/lib/supabase/client"
 
-export function AccountMenu() {
+export function AccountMenu({
+  displayName,
+  initials,
+  roleLabel,
+}: {
+  displayName: string
+  initials: string
+  roleLabel: string
+}) {
   const router = useRouter()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,11 +65,11 @@ export function AccountMenu() {
           }
         >
           <Avatar className="size-8">
-            <AvatarFallback className="bg-brand-100 text-xs font-bold text-brand-800">GR</AvatarFallback>
+            <AvatarFallback className="bg-brand-100 text-xs font-bold text-brand-800">{initials}</AvatarFallback>
           </Avatar>
           <span className="hidden text-left sm:block">
-            <span className="block text-xs font-bold text-ink-900">Gabriel Ramos</span>
-            <span className="block text-[11px] text-ink-500">Administrador</span>
+            <span className="block text-xs font-bold text-ink-900">{displayName}</span>
+            <span className="block text-[11px] text-ink-500">{roleLabel}</span>
           </span>
           <ChevronDown className="size-4 text-ink-500" aria-hidden="true" />
         </DropdownMenuTrigger>
