@@ -68,8 +68,10 @@ Todo o `.env*` está no `.gitignore`.
 | `pnpm start` | serve o build |
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm test` | testes unitários da aplicação com Vitest |
-| `pnpm check` | lint + typecheck + testes do app + build |
+| `pnpm test` | build controlado, testes HTTP, fronteiras de bundle e Playwright desktop/mobile |
+| `pnpm test:unit` | testes unitários Vitest, quando existirem |
+| `pnpm test:db` | prova pgTAP da migration de invariantes no banco local |
+| `pnpm check` | lint + typecheck + suíte da aplicação + build |
 | `pnpm supabase:push` | aplica `supabase/migrations` no projeto linkado |
 | `pnpm supabase:types` | regenera `src/lib/supabase/database.types.ts` |
 | `pnpm supabase:test` | executa os testes pgTAP locais de RLS e check-in |
@@ -98,6 +100,9 @@ para o chat nem para o Git. As migrations deste repositório já foram aplicadas
 remoto; mudanças de schema entram em migrations novas, nunca editando as existentes.
 
 Regras de migration, RLS e helpers de autorização em [`supabase/README.md`](./supabase/README.md).
+
+Os requisitos e critérios de aceite da fundação estão na
+[`spec do WebIngressos App`](./docs/specs/webingressos-app-foundation.md).
 
 ## Organização do código
 

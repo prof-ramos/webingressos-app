@@ -1,24 +1,33 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 
+import { getLoginErrorUrl, getSafeNextPath } from "@/lib/safe-navigation"
 import { createClient } from "@/lib/supabase/server"
 
-function getSafeRedirect(next: string | null, origin: string) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return new URL("/dashboard", origin)
+export async function GET(request: NextRequest) {
+  const code = request.nextUrl.searchParams.get("code")
+  const requestedNext = request.nextUrl.searchParams.get("next")
+  const next = getSafeNextPath(requestedNext, request.nextUrl.origin)
+
+  if (!code) {
+    return NextResponse.redirect(
+      getLoginErrorUrl(request.nextUrl.origin, "auth_callback_failed", next)
+    )
   }
 
-  const destination = new URL(next, origin)
-  return destination.origin === origin ? destination : new URL("/dashboard", origin)
-}
-
-export async function GET(request: Request) {
-  const url = new URL(request.url)
-  const code = url.searchParams.get("code")
-
-  if (code) {
+  try {
     const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+      return NextResponse.redirect(
+        getLoginErrorUrl(request.nextUrl.origin, "auth_callback_failed", next)
+      )
+    }
+  } catch {
+    return NextResponse.redirect(
+      getLoginErrorUrl(request.nextUrl.origin, "auth_callback_failed", next)
+    )
   }
 
-  return NextResponse.redirect(getSafeRedirect(url.searchParams.get("next"), url.origin))
+  return NextResponse.redirect(new URL(next, request.nextUrl.origin))
 }
