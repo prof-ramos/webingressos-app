@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm run test:build && pnpm run test:proxy && pnpm run test:bundle && pnpm run test:e2e",
+    "test": "pnpm run test:unit && pnpm run test:build && pnpm run test:proxy && pnpm run test:bundle && pnpm run test:e2e",
     "test:watch": "vitest",
     "test:unit": "vitest run",
     "test:build": "NEXT_PUBLIC_SUPABASE_URL= NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY= next build",

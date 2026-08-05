@@ -96,7 +96,7 @@ test("callback rejeita destino externo em uma falha de autenticação", async ()
   assert.equal(location.searchParams.get("next"), "/dashboard")
 })
 
-test("callback trata falha na troca do código como erro de autenticação", async () => {
+test("callback com código informa configuração ausente antes da troca", async () => {
   const response = await fetch(`${baseUrl}/auth/callback?code=invalido&next=%2Fdashboard`, {
     redirect: "manual",
   })
@@ -104,6 +104,6 @@ test("callback trata falha na troca do código como erro de autenticação", asy
   assert.equal(response.status, 307)
   const location = new URL(response.headers.get("location"))
   assert.equal(location.pathname, "/login")
-  assert.equal(location.searchParams.get("error"), "auth_callback_failed")
+  assert.equal(location.searchParams.get("error"), "supabase_not_configured")
   assert.equal(location.searchParams.get("next"), "/dashboard")
 })
