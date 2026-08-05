@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
+import { getSafeNextPath } from "@/lib/safe-navigation"
 
-export function LoginForm({ initialError = null }: { initialError?: string | null }) {
+export function LoginForm({
+  initialError = null,
+  next = "/dashboard",
+}: {
+  initialError?: string | null
+  next?: string
+}) {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -29,7 +36,7 @@ export function LoginForm({ initialError = null }: { initialError?: string | nul
         return
       }
 
-      router.push("/dashboard")
+      router.push(getSafeNextPath(next, window.location.origin))
       router.refresh()
     } catch {
       setError("A autenticação ainda não está configurada neste ambiente.")

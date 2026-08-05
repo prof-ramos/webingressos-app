@@ -2,7 +2,7 @@ import { Ticket } from "lucide-react"
 
 import { LoginForm } from "@/components/auth/login-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getAuthErrorMessage } from "@/lib/safe-navigation"
+import { getAuthErrorMessage, getSafeNextPath } from "@/lib/safe-navigation"
 
 export const metadata = {
   title: "Entrar",
@@ -11,9 +11,10 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string | string[] }>
+  searchParams: Promise<{ error?: string | string[]; next?: string | string[] }>
 }) {
-  const { error } = await searchParams
+  const { error, next } = await searchParams
+  const safeNext = getSafeNextPath(typeof next === "string" ? next : null, "http://localhost")
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
@@ -32,7 +33,7 @@ export default async function LoginPage({
           </div>
         </CardHeader>
         <CardContent className="p-6 pt-5 sm:p-8 sm:pt-5">
-          <LoginForm initialError={getAuthErrorMessage(error)} />
+          <LoginForm initialError={getAuthErrorMessage(error)} next={safeNext} />
         </CardContent>
       </Card>
     </main>
