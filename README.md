@@ -20,6 +20,7 @@ Validação local:
 
 ```bash
 pnpm check
+pnpm test
 ```
 
 O app usa `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Chaves secretas ou `service_role` não devem aparecer no navegador, em `.env.example` ou no repositório.
@@ -44,7 +45,7 @@ O link solicita a senha apenas no terminal. Não coloque a senha em `.env.local`
 src/
 ├── app/                 # rotas App Router, auth e dashboard
 ├── components/          # shell e componentes compartilhados
-├── lib/                 # clientes Supabase, QueryClient e utilidades
+├── lib/                 # clientes Supabase e utilidades
 └── modules/             # contratos e casos de uso por domínio
     ├── audit/
     ├── events/
@@ -55,7 +56,7 @@ src/
     └── sales/
 ```
 
-As decisões e os termos do domínio estão em [`CONTEXT.md`](./CONTEXT.md) e [`docs/adr/`](./docs/adr/). O snapshot local do design foi derivado do `DESIGN.md` da landing page, que continua sendo a fonte de referência visual compartilhada.
+Os requisitos e critérios de aceite da fundação estão na [`spec do WebIngressos App`](./docs/specs/webingressos-app-foundation.md). As decisões e os termos do domínio estão em [`CONTEXT.md`](./CONTEXT.md) e [`docs/adr/`](./docs/adr/). O snapshot local do design foi derivado do `DESIGN.md` da landing page, que continua sendo a fonte de referência visual compartilhada.
 
 ## Referências de interface
 

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 import { getSupabaseConfig } from "@/lib/supabase/config"
+import { getLoginErrorUrl } from "@/lib/safe-navigation"
 
 export async function updateSession(request: NextRequest) {
   const config = getSupabaseConfig()
@@ -13,10 +14,13 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.next({ request })
     }
 
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = "/login"
-    redirectUrl.searchParams.set("error", "supabase_not_configured")
-    return NextResponse.redirect(redirectUrl)
+    return NextResponse.redirect(
+      getLoginErrorUrl(
+        request.nextUrl.origin,
+        "supabase_not_configured",
+        `${request.nextUrl.pathname}${request.nextUrl.search}`
+      )
+    )
   }
 
   let response = NextResponse.next({ request })
@@ -37,8 +41,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims()
   if (!data?.claims && !isPublicRoute) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = "/login"
+    const redirectUrl = new URL("/login", request.nextUrl.origin)
     redirectUrl.searchParams.set(
       "next",
       `${request.nextUrl.pathname}${request.nextUrl.search}`

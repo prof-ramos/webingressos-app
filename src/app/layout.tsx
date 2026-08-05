@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import { QueryProvider } from "@/components/providers/query-provider";
-
 export const metadata: Metadata = {
   title: {
     default: "WebIngressos | Operação de eventos",
@@ -19,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="h-full antialiased">
       <body className="min-h-full">
-        <QueryProvider>{children}</QueryProvider>
+        {children}
       </body>
     </html>
   );

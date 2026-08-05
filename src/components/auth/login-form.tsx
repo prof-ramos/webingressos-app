@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label"
 import { getSafeNextPath } from "@/lib/safe-navigation"
 import { createClient } from "@/lib/supabase/client"
 
-export function LoginForm() {
+export function LoginForm({ initialError = null }: { initialError?: string | null }) {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initialError)
   const [isPending, setIsPending] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -58,7 +58,7 @@ export function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <Label htmlFor="password">Senha</Label>
-          <span className="text-xs text-ink-500">Recuperação será conectada</span>
+          <span className="text-xs text-ink-600">Recuperação será conectada</span>
         </div>
         <Input
           id="password"
