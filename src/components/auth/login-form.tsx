@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,7 @@ export function LoginForm({
   next?: string
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(initialError)
@@ -32,11 +33,15 @@ export function LoginForm({
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (signInError) {
-        setError("Não foi possível entrar. Confira seus dados e tente novamente.")
+        setError(
+          signInError.code === "invalid_credentials"
+            ? "E-mail ou senha incorretos."
+            : "Não foi possível entrar agora. Tente novamente em alguns instantes.",
+        )
         return
       }
 
-      router.push(getSafeNextPath(next, window.location.origin))
+      router.replace(getSafeNextPath(next, window.location.origin))
       router.refresh()
     } catch {
       setError("A autenticação ainda não está configurada neste ambiente.")
@@ -45,8 +50,17 @@ export function LoginForm({
     }
   }
 
+  const errorId = "login-erro"
+  const signOutFailed = searchParams.get("erro") === "logout"
+
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit} noValidate={false}>
+      {signOutFailed && (
+        <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          Não foi possível encerrar a sessão anterior por completo. Entre novamente para confirmar
+          quem está operando.
+        </p>
+      )}
       <div className="space-y-2">
         <Label htmlFor="email">E-mail</Label>
         <Input
@@ -54,17 +68,17 @@ export function LoginForm({
           name="email"
           type="email"
           autoComplete="email"
+          inputMode="email"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className="h-12"
         />
       </div>
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <Label htmlFor="password">Senha</Label>
-          <span className="text-xs text-ink-600">Recuperação será conectada</span>
-        </div>
+        <Label htmlFor="password">Senha</Label>
         <Input
           id="password"
           name="password"
@@ -73,15 +87,27 @@ export function LoginForm({
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className="h-12"
         />
       </div>
       {error && (
-        <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p
+          id={errorId}
+          role="alert"
+          className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           {error}
         </p>
       )}
-      <Button type="submit" disabled={isPending} className="h-12 w-full rounded-lg">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={isPending}
+        aria-busy={isPending}
+        className="w-full"
+      >
         {isPending ? "Entrando…" : "Entrar"}
       </Button>
     </form>

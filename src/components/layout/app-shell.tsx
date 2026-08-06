@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react"
 import type { ReactNode } from "react"
 
 import { AccountMenu } from "@/components/layout/account-menu"
@@ -23,6 +22,13 @@ export function AppShell({
 }) {
   return (
     <div className="min-h-screen bg-background">
+      <a
+        href="#conteudo"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-ink-900 focus:shadow-panel focus:outline-2 focus:outline-offset-2 focus:outline-ring"
+      >
+        Ir para o conteúdo
+      </a>
+
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card lg:flex">
         <div className="flex h-20 items-center px-6">
           <BrandMark />
@@ -40,22 +46,27 @@ export function AppShell({
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 lg:hidden">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3 lg:hidden">
             <MobileNavigation />
             <BrandMark compact />
+            <span className="min-w-0 truncate text-sm font-bold text-ink-900">
+              Organização ativa
+            </span>
           </div>
 
           <div className="hidden items-center gap-2 text-sm text-ink-500 lg:flex">
             <span>Operação</span>
-            <ChevronDown className="size-4" aria-hidden="true" />
-            <span className="font-semibold text-ink-800">Campus Ledger</span>
+            <span className="text-ink-300" aria-hidden="true">
+              /
+            </span>
+            <span className="font-semibold text-ink-800">Organização ativa</span>
           </div>
 
           <AccountMenu {...account} />
         </header>
 
-        <main className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main id="conteudo" className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <div className="mx-auto max-w-[1440px]">{children}</div>
         </main>
       </div>

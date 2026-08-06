@@ -135,7 +135,7 @@ lugares, todos dentro deste repositório ou do Postgres:
 #### 3.2.1. Camada de servidor do Next
 
 - **Responsabilidade:** renderização no servidor, refresh de sessão e proteção de rotas.
-- **Arquivos:** `proxy.ts`, `src/lib/supabase/proxy.ts`, `src/lib/supabase/server.ts`,
+- **Arquivos:** `src/proxy.ts`, `src/lib/supabase/proxy.ts`, `src/lib/supabase/server.ts`,
   `src/app/auth/callback/route.ts`.
 - **Tecnologias:** Next.js runtime, `@supabase/ssr`.
 

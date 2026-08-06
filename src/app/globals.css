@@ -9,6 +9,7 @@
   --popover: #ffffff;
   --popover-foreground: #1b2740;
   --primary: #0e6340;
+  --primary-strong: var(--brand-800);
   --primary-foreground: #ffffff;
   --secondary: #eaf5ef;
   --secondary-foreground: #0a4d32;
@@ -53,6 +54,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -64,11 +66,19 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 6px);
+  /* DESIGN.md `rounded` scale — radius grows with the size of the container. */
+  --radius-tile: 0.875rem;
+  --radius-card: 1.25rem;
+  --radius-panel: 1.75rem;
+  /* DESIGN.md elevation: a whisper at rest, a little more present on hover. */
+  --shadow-card: 0 2px 12px rgba(27, 39, 64, 0.03);
+  --shadow-card-hover: 0 6px 20px rgba(27, 39, 64, 0.06);
+  --shadow-panel: 0 12px 36px rgba(27, 39, 64, 0.08);
   --color-brand-50: var(--brand-50);
   --color-brand-100: var(--brand-100);
   --color-brand-200: var(--brand-200);
@@ -94,13 +104,47 @@
 
 @custom-variant dark (&:is(.never-dark *));
 
-* {
-  border-color: var(--border);
+/*
+ * These rules must live inside `@layer base`. Unlayered CSS beats every
+ * Tailwind layer, so an unlayered `* { border-color }` silently defeated
+ * `border-transparent`, `focus-visible:border-ring` and
+ * `aria-invalid:border-destructive` across every button and input.
+ */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  /* Keyboard focus is never allowed to be invisible. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  [data-slot="button"]:focus-visible,
+  [data-slot="input"]:focus-visible,
+  [data-slot="select-trigger"]:focus-visible {
+    outline: none;
+  }
 }
 
-body {
-  min-height: 100vh;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: "Plus Jakarta Sans", sans-serif;
+/* DESIGN.md: no motion beyond a short color/position transition. */
+@layer base {
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

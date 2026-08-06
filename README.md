@@ -25,8 +25,8 @@ Ainda não existe:
 
 - nenhuma tela lendo dados reais — o dashboard e os módulos são estáticos;
 - fluxos de negócio conectados (criar evento, vender, escanear, fechar contas);
-- logout, recuperação de senha e convites;
-- fluxos E2E e monitoramento de produção.
+- recuperação de senha e convites (logout já existe em `POST /auth/sign-out`);
+- testes E2E e monitoramento de produção.
 
 ## Stack
 
@@ -107,7 +107,7 @@ Os requisitos e critérios de aceite da fundação estão na
 ## Organização do código
 
 ```text
-proxy.ts                 # proxy do Next 16: refresh de sessão e proteção de rotas
+src/proxy.ts             # proxy do Next 16: refresh de sessão e proteção de rotas
 src/
 ├── app/                 # rotas App Router
 │   ├── (auth)/login/    # login, fora do shell

@@ -30,3 +30,5 @@ Este repositório contém o app operacional em `app.webingressos.com.br`. A land
 ## Qualidade
 
 Antes de concluir uma alteração, execute `pnpm check` e, quando houver UI, verifique viewport móvel/desktop, foco, contraste, estados de carregamento/erro/vazio e navegação por teclado.
+
+`pnpm check` não pega proxy ignorado, fonte não carregada, CSS fora de camada, menu que abre vazio nem controle inacessível por teclado — todos já aconteceram aqui. Verifique no navegador **acionando** cada controle interativo, por mouse e por teclado, e observando `pageerror`. As armadilhas específicas deste repositório estão em [`CLAUDE.md`](./CLAUDE.md#armadilhas-conhecidas).

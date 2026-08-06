@@ -1,6 +1,16 @@
+import type { Metadata } from "next"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const modules = {
@@ -30,35 +40,69 @@ const modules = {
   },
 } as const
 
+type ModuleKey = keyof typeof modules
+
 export function generateStaticParams() {
   return Object.keys(modules).map((module) => ({ module }))
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ module: string }>
+}): Promise<Metadata> {
+  const { module } = await params
+  const content = modules[module as ModuleKey]
+
+  if (!content) {
+    return { title: "Página não encontrada" }
+  }
+
+  return { title: content.title, description: content.description }
+}
+
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {
   const { module } = await params
-  const content = modules[module as keyof typeof modules]
+  const content = modules[module as ModuleKey]
 
   if (!content) {
     notFound()
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       <div className="space-y-3">
-        <Badge variant="secondary" className="rounded-md bg-brand-100 text-brand-800">
-          Em construção
-        </Badge>
-        <h1 className="text-3xl font-extrabold tracking-[-0.05em] text-ink-900 sm:text-4xl">
-          {content.title}
-        </h1>
-        <p className="text-base leading-7 text-ink-600">{content.description}</p>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink render={<Link href="/dashboard" />}>Visão geral</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{content.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl font-extrabold tracking-[-0.05em] text-ink-900 sm:text-4xl">
+            {content.title}
+          </h1>
+          <Badge variant="secondary" className="rounded-md bg-brand-100 text-brand-800">
+            Em construção
+          </Badge>
+        </div>
+        <p className="max-w-2xl text-sm leading-6 text-ink-600 sm:text-base">{content.description}</p>
       </div>
-      <Card className="rounded-[1.25rem] border-border shadow-[0_2px_12px_rgba(27,39,64,0.03)]">
+
+      <Card className="max-w-3xl rounded-card shadow-card">
         <CardHeader className="p-6 pb-2">
-          <CardTitle className="text-lg font-extrabold text-ink-900">Próximo passo</CardTitle>
+          <CardTitle as="h2" className="text-lg font-extrabold text-ink-900">
+            Próximo passo
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-6 pt-3 text-sm leading-6 text-ink-600">
-          Esta rota já faz parte do shell operacional. O comportamento real será conectado ao domínio e ao Supabase após a definição das migrations e políticas RLS.
+          Esta rota já faz parte do shell operacional. O comportamento real será conectado ao domínio
+          e ao Supabase depois que as migrations e políticas RLS estiverem aplicadas.
         </CardContent>
       </Card>
     </div>
