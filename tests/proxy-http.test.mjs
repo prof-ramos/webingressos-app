@@ -72,6 +72,18 @@ test("login permanece público quando o Supabase não está configurado", async 
   assert.equal(response.status, 200)
 })
 
+test("logout falha fechada sem configuração e informa o usuário", async () => {
+  const response = await fetch(`${baseUrl}/auth/sign-out`, {
+    method: "POST",
+    redirect: "manual",
+  })
+
+  assert.equal(response.status, 303)
+  const location = new URL(response.headers.get("location"), baseUrl)
+  assert.equal(location.pathname, "/login")
+  assert.equal(location.searchParams.get("erro"), "logout")
+})
+
 test("callback sem código informa falha e preserva o destino seguro", async () => {
   const response = await fetch(`${baseUrl}/auth/callback?next=%2Flogin`, {
     redirect: "manual",
