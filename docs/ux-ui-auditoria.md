@@ -165,7 +165,7 @@ Não havia `loading.tsx`, `error.tsx` nem `not-found.tsx`. Uma URL de módulo in
 
 `DESIGN.md` é explícito: o preenchimento primário **escurece** no hover, nunca clareia.
 `hover:bg-primary/80` fazia o oposto (e reduzia o contraste com o texto branco). Adicionado o
-token `--primary-strong: #0a4d32` e o hover passou a `hover:bg-primary-strong` — verificado:
+token `--primary-strong: var(--brand-800)` e o hover passou a `hover:bg-primary-strong` — verificado:
 `rgb(10,77,50)`.
 
 ### 1.15 E-mail da conta buscado no cliente

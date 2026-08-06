@@ -1,7 +1,7 @@
 import Link from "next/link"
 
 import { BrandMark } from "@/components/layout/brand-mark"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const metadata = {
@@ -23,7 +23,9 @@ export default function NotFound() {
             O endereço que você abriu não existe neste app. Verifique o link ou volte para a visão
             geral da operação.
           </p>
-          <Button render={<Link href="/dashboard" />}>Ir para a visão geral</Button>
+          <Link href="/dashboard" className={buttonVariants()}>
+            Ir para a visão geral
+          </Link>
         </CardContent>
       </Card>
     </main>

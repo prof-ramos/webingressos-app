@@ -18,8 +18,7 @@ export default function DashboardError({ reset }: { error: Error; reset: () => v
       </CardHeader>
       <CardContent className="space-y-5 p-6 pt-2">
         <p role="alert" className="text-sm leading-6 text-ink-600">
-          A operação continua registrada. Tente novamente e, se o erro persistir, avise a equipe
-          responsável pelo ambiente.
+          Tente novamente e, se o erro persistir, avise a equipe responsável pelo ambiente.
         </p>
         <Button onClick={reset}>Tentar novamente</Button>
       </CardContent>

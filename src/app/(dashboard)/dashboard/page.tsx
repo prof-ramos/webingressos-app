@@ -116,9 +116,9 @@ export default function DashboardPage() {
             </p>
             <ul className="space-y-3 text-sm text-brand-800">
               {[
-                "RLS em todos os dados de negócio",
-                "Check-in sem duplicidade",
-                "Financeiro imutável e rastreável",
+                "Planejado: RLS em todos os dados de negócio",
+                "Planejado: check-in sem duplicidade",
+                "Planejado: financeiro imutável e rastreável",
               ].map((item) => (
                 <li key={item} className="flex gap-3">
                   <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand-500" aria-hidden="true" />

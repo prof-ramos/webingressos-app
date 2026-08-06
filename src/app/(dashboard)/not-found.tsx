@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Compass } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const metadata = {
@@ -24,7 +24,9 @@ export default function DashboardNotFound() {
           O endereço pedido não corresponde a nenhum módulo da operação. Use a navegação lateral para
           voltar a um módulo conhecido.
         </p>
-        <Button render={<Link href="/dashboard" />}>Voltar para a visão geral</Button>
+        <Link href="/dashboard" className={buttonVariants()}>
+          Voltar para a visão geral
+        </Link>
       </CardContent>
     </Card>
   )

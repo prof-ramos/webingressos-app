@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
 
+import { DESIGN_TOKENS } from "@/lib/design-tokens"
+
 import "./globals.css"
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0e6340",
+  themeColor: DESIGN_TOKENS.brand700,
   colorScheme: "light",
 }
 

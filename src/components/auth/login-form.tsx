@@ -103,9 +103,10 @@ export function LoginForm({
       )}
       <Button
         type="submit"
+        size="lg"
         disabled={isPending}
         aria-busy={isPending}
-        className="h-12 w-full rounded-lg font-bold"
+        className="w-full"
       >
         {isPending ? "Entrando…" : "Entrar"}
       </Button>
