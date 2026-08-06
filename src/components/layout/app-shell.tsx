@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react"
 import type { ReactNode } from "react"
 
 import { AccountMenu } from "@/components/layout/account-menu"
@@ -51,13 +50,17 @@ export function AppShell({
           <div className="flex min-w-0 items-center gap-3 lg:hidden">
             <MobileNavigation />
             <BrandMark compact />
-            <span className="min-w-0 truncate text-sm font-bold text-ink-900">Campus Ledger</span>
+            <span className="min-w-0 truncate text-sm font-bold text-ink-900">
+              Organização ativa
+            </span>
           </div>
 
           <div className="hidden items-center gap-2 text-sm text-ink-500 lg:flex">
             <span>Operação</span>
-            <ChevronDown className="size-4" aria-hidden="true" />
-            <span className="font-semibold text-ink-800">Campus Ledger</span>
+            <span className="text-ink-300" aria-hidden="true">
+              /
+            </span>
+            <span className="font-semibold text-ink-800">Organização ativa</span>
           </div>
 
           <AccountMenu {...account} />

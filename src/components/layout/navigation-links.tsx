@@ -49,6 +49,7 @@ export function NavigationLinks({
             key={item.href}
             href={item.href}
             onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors",
               section === "all" && item.section === "utility" && "mt-4 border-t border-border pt-4",

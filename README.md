@@ -25,13 +25,8 @@ Ainda não existe:
 
 - nenhuma tela lendo dados reais — o dashboard e os módulos são estáticos;
 - fluxos de negócio conectados (criar evento, vender, escanear, fechar contas);
-<<<<<<< HEAD
 - recuperação de senha e convites (logout já existe em `POST /auth/sign-out`);
-- fluxos de negócio conectados, E2E e monitoramento de produção.
-=======
-- recuperação de senha e convites (logout já existe em `POST /auth/sign-out`);
-- testes do app, E2E e CI.
->>>>>>> 9f3504a (Aplica a revisão da PR #4)
+- testes E2E e monitoramento de produção.
 
 ## Stack
 

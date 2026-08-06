@@ -23,6 +23,8 @@ export async function POST(request: Request) {
     } catch {
       destination.searchParams.set("erro", "logout")
     }
+  } else {
+    destination.searchParams.set("erro", "logout")
   }
 
   // 303 so the browser turns the POST into a GET on the login screen.
