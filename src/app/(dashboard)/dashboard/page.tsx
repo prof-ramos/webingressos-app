@@ -44,7 +44,7 @@ export default function DashboardPage() {
             Criar evento
           </Button>
           {/* A disabled primary action has to say why it is disabled. */}
-          <p id="criar-evento-motivo" className="mt-2 text-xs text-ink-500">
+          <p id="criar-evento-motivo" className="mt-2 text-xs text-ink-600">
             Disponível quando o cadastro de eventos for conectado.
           </p>
         </div>
