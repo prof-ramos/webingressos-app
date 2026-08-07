@@ -66,7 +66,7 @@ use `getSupabaseConfig()` (tolerante à ausência) ou `requireSupabaseConfig()` 
 ## Estrutura
 
 ```text
-proxy.ts                      # entrada do proxy do Next 16 (equivalente ao antigo middleware)
+src/proxy.ts                  # entrada do proxy do Next 16 (equivalente ao antigo middleware)
 src/
 ├── app/
 │   ├── layout.tsx            # html lang="pt-BR" + QueryProvider
@@ -92,7 +92,7 @@ src/
     ├── identity/  events/  sales/  promoters/  operations/  finance/  audit/
 supabase/
 ├── config.toml
-└── migrations/               # 3 migrations: identity+events, sales+operations, finance+audit
+└── migrations/               # schema base, hardening de segurança e UUIDv7
 docs/adr/                     # 4 ADRs aceitos
 ```
 
@@ -155,9 +155,10 @@ que a página poderia renderizar no servidor.
 
 ## Banco de dados
 
-As migrations em `supabase/migrations/` já criam o modelo completo da primeira fatia
-vertical e **já foram aplicadas no projeto remoto de dev**. Alterações vão em migrations
-novas (`supabase migration new <nome>`), nunca editando as existentes.
+As migrations base em `supabase/migrations/` já criam o modelo completo da primeira fatia
+vertical e foram aplicadas no projeto remoto de dev. A migration de UUIDv7 deste trabalho
+fica pendente de aplicação remota até a revisão e o deploy do schema. Alterações vão em
+migrations novas (`supabase migration new <nome>`), nunca editando as existentes.
 
 Tabelas: `organizations`, `organization_memberships`, `events`, `event_organizations`,
 `event_status_history`, `lots`, `promoters`, `orders`, `order_items`, `tickets`,
@@ -165,8 +166,9 @@ Tabelas: `organizations`, `organization_memberships`, `events`, `event_organizat
 
 ### Padrões de schema
 
-- Chave interna `bigint generated always as identity`; identificador externo
-  `public_id uuid` único. URLs, QR codes e integrações usam só o público.
+- Entidades de domínio, integração e sincronização usam `id uuid primary key` com
+  UUIDv7. BIGINT sequencial fica restrito a registros técnicos e estritamente internos.
+  UUID não é segredo; QR codes usam token próprio e antifraude.
 - Valores em `*_cents bigint` com `currency text check (currency = 'BRL')`.
 - `on delete restrict` em quase todas as FKs — dados operacionais não são apagados.
 - Índice para toda FK e para toda coluna usada em predicado de RLS.

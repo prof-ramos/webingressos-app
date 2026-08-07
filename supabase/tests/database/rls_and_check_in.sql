@@ -1,6 +1,6 @@
 begin;
 
-select plan(22);
+select plan(28);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
@@ -12,7 +12,7 @@ values
   ('00000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'finance-a@example.test', now()),
   ('00000000-0000-0000-0000-000000000005', 'authenticated', 'authenticated', 'collaborator-owner@example.test', now());
 
-insert into public.organizations (public_id, name)
+insert into public.organizations (id, name)
 values
   ('10000000-0000-0000-0000-000000000001', 'Organização A'),
   ('10000000-0000-0000-0000-000000000002', 'Organização B'),
@@ -21,29 +21,29 @@ values
 insert into public.organization_memberships (organization_id, user_id, role)
 select id, '00000000-0000-0000-0000-000000000001', 'owner'
 from public.organizations
-where public_id = '10000000-0000-0000-0000-000000000001';
+where id = '10000000-0000-0000-0000-000000000001';
 
 insert into public.organization_memberships (organization_id, user_id, role)
 select id, '00000000-0000-0000-0000-000000000003', 'gate'
 from public.organizations
-where public_id = '10000000-0000-0000-0000-000000000001';
+where id = '10000000-0000-0000-0000-000000000001';
 
 insert into public.organization_memberships (organization_id, user_id, role)
 select id, '00000000-0000-0000-0000-000000000004', 'finance'
 from public.organizations
-where public_id = '10000000-0000-0000-0000-000000000001';
+where id = '10000000-0000-0000-0000-000000000001';
 
 insert into public.organization_memberships (organization_id, user_id, role)
 select id, '00000000-0000-0000-0000-000000000002', 'owner'
 from public.organizations
-where public_id = '10000000-0000-0000-0000-000000000002';
+where id = '10000000-0000-0000-0000-000000000002';
 
 insert into public.organization_memberships (organization_id, user_id, role)
 select id, '00000000-0000-0000-0000-000000000005', 'owner'
 from public.organizations
-where public_id = '10000000-0000-0000-0000-000000000003';
+where id = '10000000-0000-0000-0000-000000000003';
 
-insert into public.events (public_id, organization_id, name, status, created_by)
+insert into public.events (id, organization_id, name, status, created_by)
 select
   '20000000-0000-0000-0000-000000000001',
   id,
@@ -51,9 +51,9 @@ select
   'vendas_abertas',
   '00000000-0000-0000-0000-000000000001'
 from public.organizations
-where public_id = '10000000-0000-0000-0000-000000000001';
+where id = '10000000-0000-0000-0000-000000000001';
 
-insert into public.events (public_id, organization_id, name, status, created_by)
+insert into public.events (id, organization_id, name, status, created_by)
 select
   '20000000-0000-0000-0000-000000000002',
   id,
@@ -61,88 +61,112 @@ select
   'vendas_abertas',
   '00000000-0000-0000-0000-000000000002'
 from public.organizations
-where public_id = '10000000-0000-0000-0000-000000000002';
+where id = '10000000-0000-0000-0000-000000000002';
 
 insert into public.event_organizations (event_id, organization_id, role)
 select event_record.id, organization_record.id, 'collaborator'
 from public.events event_record
 join public.organizations organization_record
-  on organization_record.public_id = '10000000-0000-0000-0000-000000000003'
-where event_record.public_id = '20000000-0000-0000-0000-000000000001';
+  on organization_record.id = '10000000-0000-0000-0000-000000000003'
+where event_record.id = '20000000-0000-0000-0000-000000000001';
 
-insert into public.lots (public_id, event_id, name, price_cents)
-select '30000000-0000-0000-0000-000000000001', id, 'Lote A', 2500
+insert into public.lots (id, event_id, organization_id, name, price_cents)
+select '30000000-0000-0000-0000-000000000001', id, organization_id, 'Lote A', 2500
 from public.events
-where public_id = '20000000-0000-0000-0000-000000000001';
+where id = '20000000-0000-0000-0000-000000000001';
 
-insert into public.lots (public_id, event_id, name, price_cents)
-select '30000000-0000-0000-0000-000000000002', id, 'Lote B', 3000
+insert into public.lots (id, event_id, organization_id, name, price_cents)
+select '30000000-0000-0000-0000-000000000002', id, organization_id, 'Lote B', 3000
 from public.events
-where public_id = '20000000-0000-0000-0000-000000000002';
+where id = '20000000-0000-0000-0000-000000000002';
 
-insert into public.orders (public_id, event_id, status, total_cents, created_by)
+insert into public.promoters (id, event_id, organization_id, display_name, commission_rate_basis_points)
+select
+  '60000000-0000-0000-0000-000000000001',
+  id,
+  organization_id,
+  'Promoter A',
+  500
+from public.events
+where id = '20000000-0000-0000-0000-000000000001';
+
+insert into public.promoters (id, event_id, organization_id, display_name, commission_rate_basis_points)
+select
+  '60000000-0000-0000-0000-000000000002',
+  id,
+  organization_id,
+  'Promoter B',
+  500
+from public.events
+where id = '20000000-0000-0000-0000-000000000002';
+
+insert into public.orders (id, event_id, organization_id, status, total_cents, created_by)
 select
   '40000000-0000-0000-0000-000000000001',
   id,
+  organization_id,
   'confirmed',
   2500,
   '00000000-0000-0000-0000-000000000001'
 from public.events
-where public_id = '20000000-0000-0000-0000-000000000001';
+where id = '20000000-0000-0000-0000-000000000001';
 
-insert into public.orders (public_id, event_id, status, total_cents, created_by)
+insert into public.orders (id, event_id, organization_id, status, total_cents, created_by)
 select
   '40000000-0000-0000-0000-000000000002',
   id,
+  organization_id,
   'confirmed',
   3000,
   '00000000-0000-0000-0000-000000000002'
 from public.events
-where public_id = '20000000-0000-0000-0000-000000000002';
+where id = '20000000-0000-0000-0000-000000000002';
 
-insert into public.order_items (order_id, lot_id, quantity, unit_price_cents, subtotal_cents)
-select order_record.id, lot.id, 1, 2500, 2500
+insert into public.order_items (order_id, lot_id, organization_id, quantity, unit_price_cents, subtotal_cents)
+select order_record.id, lot.id, order_record.organization_id, 1, 2500, 2500
 from public.orders order_record
 join public.lots lot on lot.event_id = order_record.event_id
-where order_record.public_id = '40000000-0000-0000-0000-000000000001';
+where order_record.id = '40000000-0000-0000-0000-000000000001';
 
-insert into public.order_items (order_id, lot_id, quantity, unit_price_cents, subtotal_cents)
-select order_record.id, lot.id, 1, 3000, 3000
+insert into public.order_items (order_id, lot_id, organization_id, quantity, unit_price_cents, subtotal_cents)
+select order_record.id, lot.id, order_record.organization_id, 1, 3000, 3000
 from public.orders order_record
 join public.lots lot on lot.event_id = order_record.event_id
-where order_record.public_id = '40000000-0000-0000-0000-000000000002';
+where order_record.id = '40000000-0000-0000-0000-000000000002';
 
-insert into public.tickets (public_id, order_item_id, event_id, public_code)
+insert into public.tickets (id, order_item_id, event_id, organization_id, public_code)
 select
   '50000000-0000-0000-0000-000000000001',
   item.id,
   order_record.event_id,
+  order_record.organization_id,
   'ticket-a-001'
 from public.order_items item
 join public.orders order_record on order_record.id = item.order_id
-where order_record.public_id = '40000000-0000-0000-0000-000000000001';
+where order_record.id = '40000000-0000-0000-0000-000000000001';
 
-insert into public.orders (public_id, event_id, status, total_cents, created_by)
+insert into public.orders (id, event_id, organization_id, status, total_cents, created_by)
 select
   '40000000-0000-0000-0000-000000000003',
   id,
+  organization_id,
   'pending',
   2500,
   '00000000-0000-0000-0000-000000000001'
 from public.events
-where public_id = '20000000-0000-0000-0000-000000000001';
+where id = '20000000-0000-0000-0000-000000000001';
 
-insert into public.order_items (order_id, lot_id, quantity, unit_price_cents, subtotal_cents)
-select order_record.id, lot.id, 1, 2500, 2500
+insert into public.order_items (order_id, lot_id, organization_id, quantity, unit_price_cents, subtotal_cents)
+select order_record.id, lot.id, order_record.organization_id, 1, 2500, 2500
 from public.orders order_record
 join public.lots lot on lot.event_id = order_record.event_id
-where order_record.public_id = '40000000-0000-0000-0000-000000000003';
+where order_record.id = '40000000-0000-0000-0000-000000000003';
 
-insert into public.tickets (order_item_id, event_id, public_code)
-select item.id, order_record.event_id, 'ticket-pending-001'
+insert into public.tickets (order_item_id, event_id, organization_id, public_code)
+select item.id, order_record.event_id, order_record.organization_id, 'ticket-pending-001'
 from public.order_items item
 join public.orders order_record on order_record.id = item.order_id
-where order_record.public_id = '40000000-0000-0000-0000-000000000003';
+where order_record.id = '40000000-0000-0000-0000-000000000003';
 
 insert into public.ledger_entries (
   organization_id,
@@ -160,7 +184,7 @@ select
   'Venda de teste',
   '00000000-0000-0000-0000-000000000001'
 from public.events event_record
-where event_record.public_id = '20000000-0000-0000-0000-000000000001';
+where event_record.id = '20000000-0000-0000-0000-000000000001';
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
@@ -192,6 +216,24 @@ select is(
   (select count(*)::int from public.ledger_entries),
   1,
   'owner consegue consultar lançamentos financeiros do próprio evento'
+);
+
+select throws_ok(
+  $$
+    insert into public.orders (event_id, organization_id, promoter_id, status, total_cents, created_by)
+    select
+      event_record.id,
+      event_record.organization_id,
+      '60000000-0000-0000-0000-000000000002',
+      'confirmed',
+      2500,
+      (select auth.uid())
+    from public.events event_record
+    where event_record.id = '20000000-0000-0000-0000-000000000001';
+  $$,
+  '23503',
+  'insert or update on table "orders" violates foreign key constraint "orders_promoter_id_fkey"',
+  'pedido não pode associar promoter de outro evento ou organização'
 );
 
 select is(
@@ -284,7 +326,7 @@ select set_config(
   (select item.id::text
    from public.order_items item
    join public.orders order_record on order_record.id = item.order_id
-   where order_record.public_id = '40000000-0000-0000-0000-000000000002'),
+   where order_record.id = '40000000-0000-0000-0000-000000000002'),
   true
 );
 
@@ -301,14 +343,14 @@ select is(
     array['owner']::public.organization_role[]
   )
   from public.events event_record
-  where event_record.public_id = '20000000-0000-0000-0000-000000000001'),
+  where event_record.id = '20000000-0000-0000-0000-000000000001'),
   false,
   'owner de organização colaboradora não recebe papel de owner do evento'
 );
 
 update public.events
 set name = 'Evento invadido'
-where public_id = '20000000-0000-0000-0000-000000000001';
+where id = '20000000-0000-0000-0000-000000000001';
 
 select is(
   (select count(*)::int from public.events where name = 'Evento invadido'),
@@ -327,7 +369,7 @@ select throws_ok(
   $$
     update public.events
     set created_by = '00000000-0000-0000-0000-000000000002'
-    where public_id = '20000000-0000-0000-0000-000000000001';
+    where id = '20000000-0000-0000-0000-000000000001';
   $$,
   '42501',
   'Event ownership fields are immutable',
@@ -336,10 +378,12 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.tickets (order_item_id, event_id, public_code)
+    insert into public.tickets (order_item_id, event_id, organization_id, public_code)
     values (
-      current_setting('test.order_b_item_id')::bigint,
-      (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+      current_setting('test.order_b_item_id')::uuid,
+      (select id from public.events where id = '20000000-0000-0000-0000-000000000001'),
+      (select organization_id from public.order_items
+       where id = current_setting('test.order_b_item_id')::uuid),
       'ticket-cross-event'
     );
   $$,
@@ -350,8 +394,8 @@ select throws_ok(
 
 select is(
   (select actor_user_id::text from public.record_audit_log(
-    (select organization_id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
-    (select id from public.events where public_id = '20000000-0000-0000-0000-000000000001'),
+    (select organization_id from public.events where id = '20000000-0000-0000-0000-000000000001'),
+    (select id from public.events where id = '20000000-0000-0000-0000-000000000001'),
     'ticket',
     '50000000-0000-0000-0000-000000000001',
     'checked_in',
@@ -375,7 +419,7 @@ select throws_ok(
       organization_id, entity_type, entity_public_id, action, actor_user_id
     )
     values (
-      (select id from public.organizations where public_id = '10000000-0000-0000-0000-000000000001'),
+      (select id from public.organizations where id = '10000000-0000-0000-0000-000000000001'),
       'ticket', '50000000-0000-0000-0000-000000000001', 'forged',
       '00000000-0000-0000-0000-000000000003'
     );
@@ -401,6 +445,64 @@ select is(
   (select count(*)::int from public.ledger_entries),
   0,
   'gate não consegue consultar lançamentos financeiros'
+);
+
+select is(
+  (
+    select count(*)::int
+    from information_schema.columns
+    where table_schema = 'public'
+      and column_name = 'id'
+      and data_type = 'uuid'
+      and table_name in (
+        'organizations', 'organization_memberships', 'events', 'event_organizations',
+        'event_status_history', 'lots', 'promoters', 'orders', 'order_items',
+        'tickets', 'check_ins', 'ledger_entries'
+      )
+  ),
+  12,
+  'entidades de domínio usam UUID como chave primária'
+);
+
+select is(
+  (select data_type from information_schema.columns
+   where table_schema = 'public' and table_name = 'audit_logs' and column_name = 'id'),
+  'bigint',
+  'logs internos podem manter BIGINT sequencial'
+);
+
+select is(
+  substring(public.uuidv7()::text from 15 for 1),
+  '7',
+  'o gerador padrão produz UUIDv7'
+);
+
+select is(
+  (
+    select count(*)::int
+    from pg_constraint
+    where conrelid = 'public.check_ins'::regclass
+      and conname = 'check_ins_ticket_id_organization_id_key'
+      and contype = 'u'
+  ),
+  1,
+  'check-in preserva a relação um-para-um tenant-aware com ingresso'
+);
+
+select is(
+  (
+    select count(*)::int
+    from information_schema.columns
+    where table_schema = 'public'
+      and column_name = 'organization_id'
+      and data_type = 'uuid'
+      and table_name in (
+        'event_status_history', 'lots', 'promoters', 'orders', 'order_items',
+        'tickets', 'check_ins'
+      )
+  ),
+  7,
+  'registros filhos carregam explicitamente o tenant'
 );
 
 reset role;

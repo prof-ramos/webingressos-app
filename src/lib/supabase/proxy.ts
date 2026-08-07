@@ -6,6 +6,12 @@ import { getSupabaseConfig } from "@/lib/supabase/config"
 export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     request.nextUrl.pathname === "/login" || request.nextUrl.pathname.startsWith("/auth")
+  const isStaticAsset = /\.(svg|png|jpg|jpeg|gif|webp)$/i.test(request.nextUrl.pathname)
+
+  if (isStaticAsset) {
+    return NextResponse.next({ request })
+  }
+
   const config = getSupabaseConfig()
 
   if (!config) {

@@ -45,11 +45,11 @@ export type Database = {
           actor_user_id: string | null
           entity_public_id: string
           entity_type: string
-          event_id: number | null
+          event_id: string | null
           id: number
           metadata: Json
           occurred_at: string
-          organization_id: number
+          organization_id: string
           reason: string | null
         }
         Insert: {
@@ -57,11 +57,11 @@ export type Database = {
           actor_user_id?: string | null
           entity_public_id: string
           entity_type: string
-          event_id?: number | null
+          event_id?: string | null
           id?: never
           metadata?: Json
           occurred_at?: string
-          organization_id: number
+          organization_id: string
           reason?: string | null
         }
         Update: {
@@ -69,20 +69,20 @@ export type Database = {
           actor_user_id?: string | null
           entity_public_id?: string
           entity_type?: string
-          event_id?: number | null
+          event_id?: string | null
           id?: never
           metadata?: Json
           occurred_at?: string
-          organization_id?: number
+          organization_id?: string
           reason?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "audit_logs_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "organization_id"]
           },
           {
             foreignKeyName: "audit_logs_organization_id_fkey"
@@ -99,68 +99,75 @@ export type Database = {
           checked_in_at: string
           created_at: string
           device_label: string | null
-          event_id: number
-          id: number
-          public_id: string
-          ticket_id: number
+          event_id: string
+          id: string
+          organization_id: string
+          ticket_id: string
         }
         Insert: {
           checked_by: string
           checked_in_at?: string
           created_at?: string
           device_label?: string | null
-          event_id: number
-          id?: never
-          public_id?: string
-          ticket_id: number
+          event_id: string
+          id?: string
+          organization_id: string
+          ticket_id: string
         }
         Update: {
           checked_by?: string
           checked_in_at?: string
           created_at?: string
           device_label?: string | null
-          event_id?: number
-          id?: never
-          public_id?: string
-          ticket_id?: number
+          event_id?: string
+          id?: string
+          organization_id?: string
+          ticket_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "check_ins_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "check_ins_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "check_ins_ticket_id_fkey"
-            columns: ["ticket_id"]
+            columns: ["ticket_id", "organization_id"]
             isOneToOne: true
             referencedRelation: "tickets"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "organization_id"]
           },
         ]
       }
       event_organizations: {
         Row: {
           created_at: string
-          event_id: number
-          id: number
-          organization_id: number
+          event_id: string
+          id: string
+          organization_id: string
           role: Database["public"]["Enums"]["event_organization_role"]
         }
         Insert: {
           created_at?: string
-          event_id: number
-          id?: never
-          organization_id: number
+          event_id: string
+          id?: string
+          organization_id: string
           role?: Database["public"]["Enums"]["event_organization_role"]
         }
         Update: {
           created_at?: string
-          event_id?: number
-          id?: never
-          organization_id?: number
+          event_id?: string
+          id?: string
+          organization_id?: string
           role?: Database["public"]["Enums"]["event_organization_role"]
         }
         Relationships: [
@@ -183,37 +190,47 @@ export type Database = {
       event_status_history: {
         Row: {
           actor_user_id: string
-          event_id: number
+          event_id: string
           from_status: Database["public"]["Enums"]["event_status"] | null
-          id: number
+          id: string
           occurred_at: string
+          organization_id: string
           reason: string | null
           to_status: Database["public"]["Enums"]["event_status"]
         }
         Insert: {
           actor_user_id: string
-          event_id: number
+          event_id: string
           from_status?: Database["public"]["Enums"]["event_status"] | null
-          id?: never
+          id?: string
           occurred_at?: string
+          organization_id: string
           reason?: string | null
           to_status: Database["public"]["Enums"]["event_status"]
         }
         Update: {
           actor_user_id?: string
-          event_id?: number
+          event_id?: string
           from_status?: Database["public"]["Enums"]["event_status"] | null
-          id?: never
+          id?: string
           occurred_at?: string
+          organization_id?: string
           reason?: string | null
           to_status?: Database["public"]["Enums"]["event_status"]
         }
         Relationships: [
           {
             foreignKeyName: "event_status_history_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "event_status_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -223,10 +240,9 @@ export type Database = {
           created_at: string
           created_by: string
           ends_at: string | null
-          id: number
+          id: string
           name: string
-          organization_id: number
-          public_id: string
+          organization_id: string
           starts_at: string | null
           status: Database["public"]["Enums"]["event_status"]
         }
@@ -234,10 +250,9 @@ export type Database = {
           created_at?: string
           created_by: string
           ends_at?: string | null
-          id?: never
+          id?: string
           name: string
-          organization_id: number
-          public_id?: string
+          organization_id: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]
         }
@@ -245,10 +260,9 @@ export type Database = {
           created_at?: string
           created_by?: string
           ends_at?: string | null
-          id?: never
+          id?: string
           name?: string
-          organization_id?: number
-          public_id?: string
+          organization_id?: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]
         }
@@ -270,13 +284,12 @@ export type Database = {
           created_by: string
           currency: string
           description: string
-          event_id: number
-          id: number
+          event_id: string
+          id: string
           kind: Database["public"]["Enums"]["ledger_entry_kind"]
           occurred_at: string
-          organization_id: number
+          organization_id: string
           paid_at: string | null
-          public_id: string
           status: Database["public"]["Enums"]["ledger_entry_status"]
         }
         Insert: {
@@ -286,13 +299,12 @@ export type Database = {
           created_by: string
           currency?: string
           description: string
-          event_id: number
-          id?: never
+          event_id: string
+          id?: string
           kind: Database["public"]["Enums"]["ledger_entry_kind"]
           occurred_at?: string
-          organization_id: number
+          organization_id: string
           paid_at?: string | null
-          public_id?: string
           status?: Database["public"]["Enums"]["ledger_entry_status"]
         }
         Update: {
@@ -302,22 +314,21 @@ export type Database = {
           created_by?: string
           currency?: string
           description?: string
-          event_id?: number
-          id?: never
+          event_id?: string
+          id?: string
           kind?: Database["public"]["Enums"]["ledger_entry_kind"]
           occurred_at?: string
-          organization_id?: number
+          organization_id?: string
           paid_at?: string | null
-          public_id?: string
           status?: Database["public"]["Enums"]["ledger_entry_status"]
         }
         Relationships: [
           {
             foreignKeyName: "ledger_entries_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "organization_id"]
           },
           {
             foreignKeyName: "ledger_entries_organization_id_fkey"
@@ -333,11 +344,11 @@ export type Database = {
           capacity: number | null
           created_at: string
           currency: string
-          event_id: number
-          id: number
+          event_id: string
+          id: string
           name: string
+          organization_id: string
           price_cents: number
-          public_id: string
           sales_end_at: string | null
           sales_start_at: string | null
         }
@@ -345,11 +356,11 @@ export type Database = {
           capacity?: number | null
           created_at?: string
           currency?: string
-          event_id: number
-          id?: never
+          event_id: string
+          id?: string
           name: string
+          organization_id: string
           price_cents: number
-          public_id?: string
           sales_end_at?: string | null
           sales_start_at?: string | null
         }
@@ -357,20 +368,27 @@ export type Database = {
           capacity?: number | null
           created_at?: string
           currency?: string
-          event_id?: number
-          id?: never
+          event_id?: string
+          id?: string
           name?: string
+          organization_id?: string
           price_cents?: number
-          public_id?: string
           sales_end_at?: string | null
           sales_start_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "lots_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "lots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -378,27 +396,30 @@ export type Database = {
       order_items: {
         Row: {
           created_at: string
-          id: number
-          lot_id: number
-          order_id: number
+          id: string
+          lot_id: string
+          order_id: string
+          organization_id: string
           quantity: number
           subtotal_cents: number
           unit_price_cents: number
         }
         Insert: {
           created_at?: string
-          id?: never
-          lot_id: number
-          order_id: number
+          id?: string
+          lot_id: string
+          order_id: string
+          organization_id: string
           quantity: number
           subtotal_cents: number
           unit_price_cents: number
         }
         Update: {
           created_at?: string
-          id?: never
-          lot_id?: number
-          order_id?: number
+          id?: string
+          lot_id?: string
+          order_id?: string
+          organization_id?: string
           quantity?: number
           subtotal_cents?: number
           unit_price_cents?: number
@@ -406,16 +427,23 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "order_items_lot_id_fkey"
-            columns: ["lot_id"]
+            columns: ["lot_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "lots"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "organization_id"]
           },
           {
             foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
+            columns: ["order_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "order_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -428,10 +456,10 @@ export type Database = {
           created_at: string
           created_by: string
           currency: string
-          event_id: number
-          id: number
-          promoter_id: number | null
-          public_id: string
+          event_id: string
+          id: string
+          organization_id: string
+          promoter_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_cents: number
         }
@@ -442,10 +470,10 @@ export type Database = {
           created_at?: string
           created_by: string
           currency?: string
-          event_id: number
-          id?: never
-          promoter_id?: number | null
-          public_id?: string
+          event_id: string
+          id?: string
+          organization_id: string
+          promoter_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_cents: number
         }
@@ -456,49 +484,56 @@ export type Database = {
           created_at?: string
           created_by?: string
           currency?: string
-          event_id?: number
-          id?: never
-          promoter_id?: number | null
-          public_id?: string
+          event_id?: string
+          id?: string
+          organization_id?: string
+          promoter_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_cents?: number
         }
         Relationships: [
           {
             foreignKeyName: "orders_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "orders_promoter_id_fkey"
-            columns: ["promoter_id"]
+            columns: ["promoter_id", "event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "promoters"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "event_id", "organization_id"]
           },
         ]
       }
       organization_memberships: {
         Row: {
           created_at: string
-          id: number
-          organization_id: number
+          id: string
+          organization_id: string
           role: Database["public"]["Enums"]["organization_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
-          id?: never
-          organization_id: number
+          id?: string
+          organization_id: string
           role: Database["public"]["Enums"]["organization_role"]
           user_id: string
         }
         Update: {
           created_at?: string
-          id?: never
-          organization_id?: number
+          id?: string
+          organization_id?: string
           role?: Database["public"]["Enums"]["organization_role"]
           user_id?: string
         }
@@ -515,21 +550,18 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
-          id: number
+          id: string
           name: string
-          public_id: string
         }
         Insert: {
           created_at?: string
-          id?: never
+          id?: string
           name: string
-          public_id?: string
         }
         Update: {
           created_at?: string
-          id?: never
+          id?: string
           name?: string
-          public_id?: string
         }
         Relationships: []
       }
@@ -540,9 +572,9 @@ export type Database = {
           contact: string | null
           created_at: string
           display_name: string
-          event_id: number
-          id: number
-          public_id: string
+          event_id: string
+          id: string
+          organization_id: string
         }
         Insert: {
           active?: boolean
@@ -550,9 +582,9 @@ export type Database = {
           contact?: string | null
           created_at?: string
           display_name: string
-          event_id: number
-          id?: never
-          public_id?: string
+          event_id: string
+          id?: string
+          organization_id: string
         }
         Update: {
           active?: boolean
@@ -560,16 +592,23 @@ export type Database = {
           contact?: string | null
           created_at?: string
           display_name?: string
-          event_id?: number
-          id?: never
-          public_id?: string
+          event_id?: string
+          id?: string
+          organization_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "promoters_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "promoters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -577,41 +616,48 @@ export type Database = {
       tickets: {
         Row: {
           created_at: string
-          event_id: number
-          id: number
-          order_item_id: number
+          event_id: string
+          id: string
+          order_item_id: string
+          organization_id: string
           public_code: string
-          public_id: string
         }
         Insert: {
           created_at?: string
-          event_id: number
-          id?: never
-          order_item_id: number
+          event_id: string
+          id?: string
+          order_item_id: string
+          organization_id: string
           public_code?: string
-          public_id?: string
         }
         Update: {
           created_at?: string
-          event_id?: number
-          id?: never
-          order_item_id?: number
+          event_id?: string
+          id?: string
+          order_item_id?: string
+          organization_id?: string
           public_code?: string
-          public_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "tickets_event_id_fkey"
-            columns: ["event_id"]
+            columns: ["event_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "organization_id"]
           },
           {
             foreignKeyName: "tickets_order_item_id_fkey"
-            columns: ["order_item_id"]
+            columns: ["order_item_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "order_items"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -621,7 +667,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_access_event: { Args: { target_event_id: number }; Returns: boolean }
+      can_access_event: { Args: { target_event_id: string }; Returns: boolean }
       check_in_ticket: {
         Args: {
           scanner_device_label?: string
@@ -639,9 +685,8 @@ export type Database = {
         Args: { organization_name: string }
         Returns: {
           created_at: string
-          id: number
+          id: string
           name: string
-          public_id: string
         }
         SetofOptions: {
           from: "*"
@@ -653,21 +698,51 @@ export type Database = {
       has_event_role: {
         Args: {
           allowed_roles: Database["public"]["Enums"]["organization_role"][]
-          target_event_id: number
+          target_event_id: string
         }
         Returns: boolean
       }
       has_org_role: {
         Args: {
           allowed_roles: Database["public"]["Enums"]["organization_role"][]
-          target_organization_id: number
+          target_organization_id: string
         }
         Returns: boolean
       }
       is_org_member: {
-        Args: { target_organization_id: number }
+        Args: { target_organization_id: string }
         Returns: boolean
       }
+      record_audit_log: {
+        Args: {
+          target_action: string
+          target_entity_public_id: string
+          target_entity_type: string
+          target_event_id: string
+          target_metadata?: Json
+          target_organization_id: string
+          target_reason?: string
+        }
+        Returns: {
+          action: string
+          actor_user_id: string | null
+          entity_public_id: string
+          entity_type: string
+          event_id: string | null
+          id: number
+          metadata: Json
+          occurred_at: string
+          organization_id: string
+          reason: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      uuidv7: { Args: never; Returns: string }
     }
     Enums: {
       event_organization_role: "owner" | "collaborator"

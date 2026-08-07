@@ -1,12 +1,15 @@
 # Supabase
 
-O projeto de desenvolvimento foi provisionado como `webingressos-dev` na organização `proframos`, região `sa-east-1`, ref `zcvkdgethbhgaownygzs`. As migrations deste diretório já foram aplicadas no ambiente remoto.
+O projeto de desenvolvimento foi provisionado como `webingressos-dev` na organização `proframos`, região `sa-east-1`, ref `zcvkdgethbhgaownygzs`. As migrations base deste diretório já foram aplicadas no ambiente remoto; migrations novas ficam pendentes até revisão e deploy.
 
 ## Regras para as migrations
 
 - começar cada migration com `supabase migration new <nome>`;
-- usar `bigint generated always as identity` para chaves internas;
-- manter um identificador público opaco e único quando a entidade sair do limite interno;
+- usar `uuid` com geração UUIDv7 como chave primária das entidades de domínio,
+  integração e sincronização;
+- reservar `bigint generated always as identity` para registros técnicos e estritamente
+  internos;
+- não tratar UUID como segredo; QR codes usam token antifraude separado;
 - usar `timestamptz` para instantes e centavos inteiros para valores em BRL;
 - criar índices para toda FK e para colunas usadas nos predicados de RLS;
 - habilitar RLS em todas as tabelas de negócio;

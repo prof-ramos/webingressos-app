@@ -12,7 +12,6 @@ export type EventStatus =
 
 export type Event = {
   id: EventId
-  publicId: string
   organizationId: OrganizationId
   name: string
   status: EventStatus

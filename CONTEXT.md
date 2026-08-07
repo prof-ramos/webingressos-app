@@ -34,5 +34,5 @@ Este documento registra a linguagem compartilhada do produto. Os termos abaixo d
 1. O ciclo do evento é `rascunho → planejado → vendas abertas → encerrado → prestação de contas fechada`, com `cancelado` como saída possível antes do fechamento.
 2. Vendas e movimentos financeiros não são apagados; correções são novos registros ou transições auditáveis.
 3. Valores monetários usam centavos inteiros e moeda explícita (`BRL`); instantes usam UTC.
-4. IDs internos podem ser sequenciais no banco, mas URLs, QR codes e integrações usam identificadores públicos opacos.
+4. Entidades de domínio, integração e sincronização usam UUIDv7 como chave primária; BIGINT sequencial fica restrito a registros estritamente internos. O UUID do registro não é segredo e o QR Code usa um token antifraude separado.
 5. A autorização é sempre limitada por organização e evento, com RLS em todas as tabelas de negócio expostas.

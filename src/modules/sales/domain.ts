@@ -1,4 +1,5 @@
 import type { EventId } from "@/modules/events/domain"
+import type { OrganizationId } from "@/modules/identity/domain"
 import type { PromoterId } from "@/modules/promoters/domain"
 
 export type OrderId = string & { readonly __brand: "OrderId" }
@@ -8,7 +9,7 @@ export type OrderStatus = "pending" | "confirmed" | "cancelled" | "refunded"
 
 export type Order = {
   id: OrderId
-  publicId: string
+  organizationId: OrganizationId
   eventId: EventId
   promoterId: PromoterId | null
   status: OrderStatus
@@ -18,6 +19,7 @@ export type Order = {
 
 export type Ticket = {
   id: TicketId
+  organizationId: OrganizationId
   publicCode: string
   orderId: OrderId
   checkedInAt: string | null

@@ -5,7 +5,6 @@ export type OrganizationRole = "owner" | "finance" | "ops" | "gate"
 
 export type Organization = {
   id: OrganizationId
-  publicId: string
   name: string
 }
 

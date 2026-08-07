@@ -19,7 +19,8 @@ Já existe:
 - contratos de domínio em `src/modules/`, um diretório por bounded context;
 - camada SSR do Supabase (cliente de browser, de servidor e refresh de sessão no proxy);
 - schema completo da primeira fatia vertical, com RLS e políticas por organização/evento,
-  já aplicado no projeto remoto de desenvolvimento.
+  aplicado no projeto remoto de desenvolvimento; a migration de UUIDv7 aguarda revisão e
+  deploy remoto.
 
 Ainda não existe:
 
@@ -92,15 +93,16 @@ pnpm supabase:types
 ```
 
 O link pede a senha do banco apenas no prompt do terminal. Ela não vai para o `.env.local`,
-para o chat nem para o Git. As migrations deste repositório já foram aplicadas no ambiente
-remoto; mudanças de schema entram em migrations novas, nunca editando as existentes.
+para o chat nem para o Git. As migrations base deste repositório já foram aplicadas no
+ambiente remoto; a migration de UUIDv7 fica pendente até revisão e deploy. Mudanças de
+schema entram em migrations novas, nunca editando as existentes.
 
 Regras de migration, RLS e helpers de autorização em [`supabase/README.md`](./supabase/README.md).
 
 ## Organização do código
 
 ```text
-proxy.ts                 # proxy do Next 16: refresh de sessão e proteção de rotas
+src/proxy.ts             # proxy do Next 16: refresh de sessão e proteção de rotas
 src/
 ├── app/                 # rotas App Router
 │   ├── (auth)/login/    # login, fora do shell

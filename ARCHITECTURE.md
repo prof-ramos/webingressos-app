@@ -17,7 +17,7 @@ Handlers e o proxy.
 
 ```text
 webingressos-app/
-├── proxy.ts                      # proxy do Next 16: refresh de sessão + proteção de rotas
+├── src/proxy.ts                  # proxy do Next 16: refresh de sessão + proteção de rotas
 ├── next.config.ts                # sem opções customizadas hoje
 ├── eslint.config.mjs             # flat config, eslint-config-next
 ├── postcss.config.mjs            # @tailwindcss/postcss
@@ -174,12 +174,13 @@ lugares, todos dentro deste repositório ou do Postgres:
   | Operação | `check_ins` |
   | Financeiro e trilha | `ledger_entries`, `audit_logs` |
 
-- **Padrões de schema:** chave interna `bigint generated always as identity` e
-  identificador externo `public_id uuid`; valores em `*_cents bigint` com
+- **Padrões de schema:** entidades de domínio, integração e sincronização usam
+  `id uuid primary key` com geração UUIDv7; `BIGINT` sequencial fica restrito a
+  registros técnicos e estritamente internos. Valores em `*_cents bigint` usam
   `check (currency = 'BRL')`; `on delete restrict` em quase toda FK; índice para toda FK e
   para toda coluna usada em predicado de RLS.
-- **Migrations:** três, em `supabase/migrations/`, já aplicadas no ambiente remoto.
-  Alterações entram em migration nova, nunca editando as existentes.
+- **Migrations:** em `supabase/migrations/`; alterações entram em uma migration nova e
+  só são aplicadas ao ambiente remoto após validação local.
 
 ### 4.2. Cache, fila e storage
 
@@ -227,8 +228,9 @@ Esta seção é curta porque quase nada está configurado no repositório.
   (vault `webingressos`) e é digitada só no prompt do `supabase link`.
 - **Exposição de tabelas:** o projeto não auto-expõe entidades novas; cada `grant` é
   explícito nas migrations, com a RLS como fronteira de autorização.
-- **Identificadores:** URLs, QR codes e integrações usam só o `public_id` opaco, nunca a
-  chave sequencial interna.
+- **Identificadores:** o `id` UUIDv7 pode circular em URLs e integrações, mas não é
+  segredo. O QR Code usa um token próprio, aleatório ou criptograficamente autenticado,
+  com validação e idempotência no servidor.
 - **Integridade do check-in:** `unique (ticket_id)` em `check_ins` mais
   `on conflict do nothing` dentro de `check_in_ticket` — a idempotência é uma constraint do
   banco, não uma verificação otimista no app.
@@ -286,7 +288,7 @@ Evoluções previstas, com a fronteira arquitetural já reservada:
 - **Repositório:** https://github.com/prof-ramos/webingressos-app
 - **Repositório relacionado:** [`webingressos-page`](https://github.com/prof-ramos/webingressos-page) — landing page comercial, escopo separado
 - **Responsável:** `prof-ramos`
-- **Última atualização deste documento:** 2026-08-01
+- **Última atualização deste documento:** 2026-08-07
 
 ## 11. Glossário
 
