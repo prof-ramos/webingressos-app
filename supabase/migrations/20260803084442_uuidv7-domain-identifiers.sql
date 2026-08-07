@@ -866,7 +866,7 @@ begin
     return;
   end if;
 
-  if ticket_record.event_public_id <> target_event_public_id then
+  if ticket_record.event_public_id is distinct from target_event_public_id then
     return query select 'invalid', 'wrong_event', null::uuid, null::timestamptz;
     return;
   end if;

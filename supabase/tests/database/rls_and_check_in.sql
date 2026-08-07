@@ -1,6 +1,6 @@
 begin;
 
-select plan(30);
+select plan(31);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
@@ -284,6 +284,16 @@ select is(
   )),
   null::text,
   'ingresso de outro evento não expõe seu identificador'
+);
+
+select is(
+  (select reason from public.check_in_ticket(
+    'ticket-a-001',
+    null::uuid,
+    'device-a'
+  )),
+  'wrong_event',
+  'evento nulo não permite validar o ingresso'
 );
 
 select is(
