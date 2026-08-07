@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(30);
 
 -- The fixtures are rolled back at the end of the test so this suite is safe to run
 -- against a disposable local database.
@@ -277,6 +277,16 @@ select is(
 );
 
 select is(
+  (select ticket_public_id::text from public.check_in_ticket(
+    'ticket-a-001',
+    '20000000-0000-0000-0000-000000000002',
+    'device-a'
+  )),
+  null::text,
+  'ingresso de outro evento não expõe seu identificador'
+);
+
+select is(
   (select reason from public.check_in_ticket(
     'ticket-pending-001',
     '20000000-0000-0000-0000-000000000001',
@@ -305,8 +315,18 @@ select is(
     '20000000-0000-0000-0000-000000000001',
     'device-b'
   )),
-  'not_authorized',
-  'ator sem papel no evento recebe recusa discriminada'
+  'not_found',
+  'ator sem acesso recebe a mesma recusa de um código inexistente'
+);
+
+select is(
+  (select ticket_public_id::text from public.check_in_ticket(
+    'ticket-a-001',
+    '20000000-0000-0000-0000-000000000001',
+    'device-b'
+  )),
+  null::text,
+  'ator sem acesso não recebe o identificador do ingresso'
 );
 
 select is(

@@ -859,13 +859,15 @@ begin
     return;
   end if;
 
-  if ticket_record.event_public_id <> target_event_public_id then
-    return query select 'invalid', 'wrong_event', ticket_record.id, null::timestamptz;
+  if not public.has_event_role(ticket_record.event_id, array['owner', 'ops', 'gate']::public.organization_role[]) then
+    -- Keep inaccessible and nonexistent codes indistinguishable. In particular,
+    -- do not reveal a ticket UUID before the scanner is authorized for its event.
+    return query select 'invalid', 'not_found', null::uuid, null::timestamptz;
     return;
   end if;
 
-  if not public.has_event_role(ticket_record.event_id, array['owner', 'ops', 'gate']::public.organization_role[]) then
-    return query select 'invalid', 'not_authorized', null::uuid, null::timestamptz;
+  if ticket_record.event_public_id <> target_event_public_id then
+    return query select 'invalid', 'wrong_event', null::uuid, null::timestamptz;
     return;
   end if;
 
