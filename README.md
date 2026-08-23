@@ -1,4 +1,6 @@
-# WebIngressos App
+> [!NOTE]
+> **Status do portfólio:** este é o repositório canônico ativo. Predecessor(es) arquivado(s): [webingressos-legacy](https://github.com/prof-ramos/webingressos-legacy); a landing atual está em [webingressos-page](https://github.com/prof-ramos/webingressos-page). Os históricos permanecem disponíveis somente para leitura.
+<!-- PORTFOLIO_STATUS: canonical; predecessors=webingressos-legacy --># WebIngressos App
 
 Aplicação operacional da WebIngressos para organizadores e equipes de operação de eventos
 universitários. Este repositório é separado da landing page comercial em
